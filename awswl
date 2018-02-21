@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+import argparse
+import boto3
+import os
+import sys
+
+from botocore.exceptions import ClientError
+
+
+def main(args):
+    execute(parse_args(args))
+
+
+def parse_args(args):
+    parser = argparse.ArgumentParser(
+        description='Maintains a list of whitelisted CIDR blocks granted SSH access to AWS via a '
+                    'security group.'
+    )
+    parser.add_argument(
+        '--list', action='store_const', dest='action', const='list',
+        help='Lists the ip addresses in the security group with SSH access.'
+    )
+    parser.add_argument(
+        '--sgid', default=os.environ['AWSWL_SGID'],
+        help='The security group to use for SSH access.'
+    )
+    parser.add_argument(
+        '--ssh-port', default=22,
+        help='The port used for SSH. By default this is port 22, but some people '
+             'prefer to access SSH over another port.'
+    )
+    # TODO: What happens if store_const is called twice for the same dest?
+    # TODO: Add, Remove, Add Current, Remove Current
+    return parser.parse_args(args)
+
+
+def execute(options):
+    if options.action == 'list':
+        list_authorized(options)
+    else:
+        print("Action: {0}".format(options.action))
+
+
+def list_authorized(options):
+    ec2 = boto3.resource('ec2')
+    try:
+        security_group = ec2.SecurityGroup(options.sgid)
+        ssh_permissions = [
+            permission
+            for permission in security_group.ip_permissions
+            if permission['IpProtocol'] == 'tcp' and permission['ToPort'] == options.ssh_port
+        ]
+        authorized_blocks = [
+            ip_range['CidrIp']
+            for permission in ssh_permissions
+            for ip_range in permission['IpRanges']
+        ]
+        authorized_blocks += [
+            ip_range['CidrIpv6']
+            for permission in ssh_permissions
+            for ip_range in permission['Ipv6Ranges']
+        ]
+        if authorized_blocks:
+            print("The following CIDR blocks are authorized for SSH:")
+            for block in authorized_blocks:
+                print("- {0}".format(block))
+        else:
+            print("No CIDR blocks authorized for SSH.")
+    except ClientError as e:
+        print(e)
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
