@@ -1,7 +1,8 @@
 import argparse
 import os
 
-AWSWL_SGID_KEY='AWSWL_SGID'
+AWSWL_SGID_KEY = 'AWSWL_SGID'
+
 
 def parse_args(args):
     parser = argparse.ArgumentParser(

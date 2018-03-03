@@ -8,6 +8,7 @@ from requests import get
 
 from botocore.exceptions import ClientError
 
+
 def main():
     args = sys.argv[1:]
     execute(cli.parse_args(args))
@@ -25,10 +26,13 @@ def execute(options):
 def validate_options(options):
     if not options.sgid:
         print(
-            "No security group specified as an argument with --sgid or in the environment as AWSWL_SGID. Cannot proceed.")
+            "No security group specified as an argument with --sgid or in the environment "
+            "as AWSWL_SGID. Cannot proceed.")
         return False
     elif not options.actions:
-        print( "You must specify at least one of the action options (--list, --add-current, --remove-current).")
+        print(
+            "You must specify at least one of the action options "
+            "(--list, --add-current, --remove-current).")
         return False
     return True
 
@@ -66,7 +70,7 @@ def list(options):
                     print("- {0}".format(block))
         else:
             print("No CIDR blocks authorized for SSH.")
-    except botocore.exceptions.NoRegionError as nre:
+    except botocore.exceptions.NoRegionError:
         print("No AWS region specified (AWS configuration/environment variables).")
     except ClientError as e:
         print(e)

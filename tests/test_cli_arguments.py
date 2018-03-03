@@ -15,15 +15,18 @@ def envsgid():
 def test_parse_empty_arguments():
     options = cli.parse_args([])
     assert options.ssh_port == 22
-    assert options.sgid == None
+    assert options.sgid is None
 
 
+# noinspection PyShadowingNames
 def test_parse_environment_into_arguments(envsgid):
     options = cli.parse_args([])
     assert options.sgid == envsgid
 
 
+# noinspection PyShadowingNames
 def test_parse_override_defaults(envsgid):
     override = 'sg-67890'
     options = cli.parse_args(['--sgid', override])
     assert options.sgid == override
+    assert options.sgid != envsgid
