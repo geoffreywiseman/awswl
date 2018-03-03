@@ -1,3 +1,12 @@
+# Python
+__pycache__/
+.pytest_cache/
+
+# Python: Build and Distribute
+/build
+/dist
+*.egg-info
+
 # IntelliJ
 /.idea
 
