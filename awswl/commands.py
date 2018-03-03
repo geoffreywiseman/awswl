@@ -1,48 +1,14 @@
 import boto3
 import botocore
-import sys
-from . import cli
 
 from ipaddress import ip_network, ip_address
-from requests import get
-
 from botocore.exceptions import ClientError
 
-
-def main():
-    args = sys.argv[1:]
-    execute(cli.parse_args(args))
+from . import externalip
 
 
-def execute(options):
-    if validate_options(options):
-        for action in options.actions:
-            if action in globals():
-                globals()[action](options)
-            else:
-                print("Unexpected action: {0}".format(action))
-
-
-def validate_options(options):
-    if not options.sgid:
-        print(
-            "No security group specified as an argument with --sgid or in the environment "
-            "as AWSWL_SGID. Cannot proceed.")
-        return False
-    elif not options.actions:
-        print(
-            "You must specify at least one of the action options "
-            "(--list, --add-current, --remove-current).")
-        return False
-    return True
-
-
-def get_external_ip():
-    return get('https://api.ipify.org').text
-
-
-def list(options):
-    external_ip = ip_address(get_external_ip())
+def cmd_list(options):
+    external_ip = ip_address(externalip.get_external_ip())
     try:
         ec2 = boto3.resource('ec2')
         security_group = ec2.SecurityGroup(options.sgid)
@@ -76,9 +42,9 @@ def list(options):
         print(e)
 
 
-def add_current(options):
+def cmd_add_current(options):
     try:
-        external_ip = get_external_ip()
+        external_ip = externalip.get_external_ip()
         cidr = "{0}/32".format(external_ip)
         ec2 = boto3.resource('ec2')
         security_group = ec2.SecurityGroup(options.sgid)
@@ -96,9 +62,9 @@ def add_current(options):
             print(e)
 
 
-def remove_current(options):
+def cmd_remove_current(options):
     try:
-        external_ip = get_external_ip()
+        external_ip = externalip.get_external_ip()
         cidr = "{0}/32".format(external_ip)
         ec2 = boto3.resource('ec2')
         security_group = ec2.SecurityGroup(options.sgid)
@@ -114,3 +80,6 @@ def remove_current(options):
             print("Current IP address is already whitelisted.")
         else:
             print(e)
+
+def cmd_version(options):
+    print("awswl v{0}".format(options.version))

@@ -1,0 +1,4 @@
+ipaddress
+pytest
+boto3
+requests

@@ -12,6 +12,7 @@ def envsgid():
     os.environ.unsetenv(cli.AWSWL_SGID_KEY)
 
 
+# noinspection PyShadowingNames
 def test_parse_empty_arguments():
     options = cli.parse_args([])
     assert options.ssh_port == 22
