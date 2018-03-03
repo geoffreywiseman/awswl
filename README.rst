@@ -1,6 +1,9 @@
 AWS Whitelist
 =============
 
+.. image:: https://travis-ci.org/geoffreywiseman/awswl.svg?branch=master
+    :target: https://travis-ci.org/geoffreywiseman/awswl
+
 A small tool to make it pretty simple to add and remove ip addresses (or CIDR blocks) from an AWS
 security group. This acts like a sort of oversimplified VPN, where you can quickly give yourself
 SSH access to a project as you move about from netwowrk to network.
