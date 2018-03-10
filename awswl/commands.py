@@ -81,5 +81,6 @@ def cmd_remove_current(options):
         else:
             print(e)
 
+
 def cmd_version(options):
     print("awswl v{0}".format(options.version))

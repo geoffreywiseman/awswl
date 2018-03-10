@@ -1,8 +1,7 @@
-import requests
-
 from awswl import externalip
 from unittest.mock import patch
 from argparse import Namespace
+
 
 @patch('requests.get')
 def test_get_externalip(get_method):
@@ -17,4 +16,3 @@ def test_get_externalip(get_method):
 
     # Then
     assert external_ip == example_ip
-

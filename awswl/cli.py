@@ -34,6 +34,6 @@ def parse_args(args):
         help='The port used for SSH. By default this is port 22, but some people '
              'prefer to access SSH over another port.'
     )
-    # TODO: What happens if store_const is called twice for the same dest?
-    # TODO: Add, Remove, A:qdd Current, Remove Current
+    
+    # TODO: Add, Remove
     return parser.parse_args(args)

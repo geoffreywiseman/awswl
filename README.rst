@@ -6,7 +6,7 @@ AWS Whitelist
 
 A small tool to make it pretty simple to add and remove ip addresses (or CIDR blocks) from an AWS
 security group. This acts like a sort of oversimplified VPN, where you can quickly give yourself
-SSH access to a project as you move about from netwowrk to network.
+SSH access to a project as you move about from network to network.
 
 Better Solutions
 ----------------
@@ -66,6 +66,6 @@ Environment
 -----------
 
 All of these require you to have AWS credentials set up in advance, stored in ``~/.aws/credentials``,
-and if you need to use a profle, you can configure it with ``AWS_PROFILE``. If you want to identify
+and if you need to use a profile, you can configure it with ``AWS_PROFILE``. If you want to identify
 the security group using a command-line variable so that you don't have to put it into each command
 invocation, you can put it in ``AWSWL_SGID``.

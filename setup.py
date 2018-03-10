@@ -8,7 +8,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
-# Get the verison from the VERSION file
+# Get the version from the VERSION file
 with open(path.join(here, 'awswl', 'VERSION')) as version_file:
     version = version_file.read().strip()
 
@@ -106,7 +106,7 @@ setup(
     #
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['ipaddress', 'boto3', 'requests'],
+    install_requires=['ipaddress', 'boto3', 'requests', 'botocore'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). Users will be able to install these using the "extras"
@@ -119,6 +119,10 @@ setup(
     extras_require={  # Optional
         'test': ['pytest'],
     },
+
+    tests_require=[
+        'pytest'
+    ],
 
     # If there are data files included in your packages that need to be
     # installed, specify them here.

@@ -3,6 +3,7 @@ import sys
 from . import cli, commands
 from pkg_resources import resource_string
 
+
 def main():
     args = sys.argv[1:]
     options = cli.parse_args(args)
@@ -10,14 +11,16 @@ def main():
     options.version = version
     execute(options)
 
+
 def execute(options):
     if validate_options(options):
         for command_name in options.actions:
-            command = getattr(commands,command_name)
+            command = getattr(commands, command_name)
             if command:
                 command(options)
             else:
                 print("Unexpected command: {0}".format(command_name))
+
 
 def validate_options(options):
     if not options.sgid:
@@ -31,5 +34,3 @@ def validate_options(options):
             "(--list, --add-current, --remove-current, --version).")
         return False
     return True
-
-
