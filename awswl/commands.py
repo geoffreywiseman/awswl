@@ -12,10 +12,12 @@ def cmd_list(options):
     try:
         ec2 = boto3.resource('ec2')
         security_group = ec2.SecurityGroup(options.sgid)
+
         ssh_permissions = [
             permission
             for permission in security_group.ip_permissions
-            if permission['IpProtocol'] == 'tcp' and permission['ToPort'] == options.ssh_port
+            if permission['IpProtocol'] == 'tcp' and permission['ToPort'] <= options.ssh_port and
+               permission['FromPort'] >= options.ssh_port
         ]
         authorized_blocks = [
             ip_network(ip_range['CidrIp'])
