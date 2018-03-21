@@ -25,6 +25,7 @@ def cmd_list(options):
         authorized_blocks += [
             ip_network(ip_range['CidrIpv6'])
             for permission in ssh_permissions
+            if 'Ipv6Ranges' in permission
             for ip_range in permission['Ipv6Ranges']
         ]
         if authorized_blocks:
