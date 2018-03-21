@@ -14,4 +14,5 @@ __pycache__/
 /.envrc
 /.direnv
 
-
+# Moto Tests
+/tests/test_moto_*.py
