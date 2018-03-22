@@ -10,9 +10,12 @@ from pprint import pprint
 import os
 
 
-@pytest.fixture(name='region')
+@pytest.fixture(name='region',scope='function')
 def region_fixture():
-    os.environ['AWS_DEFAULT_REGION'] = 'ca-central-1'
+    region = 'ca-central-1'
+    os.environ['AWS_DEFAULT_REGION'] = region
+    yield region
+    del os.environ['AWS_DEFAULT_REGION']
 
 
 @pytest.fixture(name='security_group', scope='function')
@@ -47,13 +50,39 @@ def test_list_command_lists_no_blocks(region, security_group):
 
 def test_list_command_lists_ipv4_blocks(region, security_group):
     security_group.authorize_ingress(IpPermissions=[{
-        'IpRanges': [{'CidrIp': '10.0.0.1/32'}],
+        'IpRanges': [
+            {'CidrIp': '10.0.0.1/32'},
+            {'CidrIp': '10.0.1.0/24'}
+        ],
         'IpProtocol': 'tcp',
         'FromPort': 22,
         'ToPort': 22
     }])
-    assert_list_output(options(security_group), "- 10.0.0.1/32\n")
+    assert_list_output(options(security_group), ["- 10.0.0.1/32\n", "- 10.0.1.0/24\n"])
 
+
+def test_list_command_identifies_enclosing_blocks(region, security_group):
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [
+            {'CidrIp': '192.0.2.1/32'},
+            {'CidrIp': '192.0.2.0/24'},
+            {'CidrIp': '192.0.1.0/24'}
+        ],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    assert_list_output(
+        options(security_group),
+        ["- 192.0.2.1/32 (current)\n", "- 192.0.2.0/24 (current)\n", "- 192.0.1.0/24\n"]
+    )
+
+@mock_ec2
+def test_list_command_without_region_shows_error():
+    assert 'AWS_DEFAULT_REGION' not in os.environ
+    options = Namespace()
+    options.sgid='sg-12345'
+    assert_list_output(options,"No AWS region specified")
 
 def options(security_group):
     options = Namespace()
@@ -64,15 +93,16 @@ def options(security_group):
 
 @patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
 @patch('sys.stdout', new_callable=io.StringIO)
-def assert_list_output(options, substring, mock_stdout, exip_method):
+def assert_list_output(options, matches, mock_stdout, exip_method):
     commands.cmd_list(options)
-    assert substring in mock_stdout.getvalue()
+    output = mock_stdout.getvalue()
+    if isinstance(matches, str):
+        assert matches in output
+    if isinstance(matches, list):
+        for match in matches:
+            assert match in output
 
-# TODO: List With Blocks
-# TODO: List IPV4
-# TODO: List IPV6
-# TODO: List Shows Current
-# TODO: List NoRegion
-# TODO: List ClientError
+# TODO: List Ipv6 (https://github.com/spulec/moto/issues/1523)
+
 # TODO: Add Current
 # TODO: Remove Current
