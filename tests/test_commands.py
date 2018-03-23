@@ -6,16 +6,17 @@ from moto import mock_ec2
 from unittest.mock import patch
 from argparse import Namespace
 from awswl import commands
-from pprint import pprint
 import os
 
+AWS_DEFAULT_REGION = 'AWS_DEFAULT_REGION'
 
-@pytest.fixture(name='region',scope='function')
+
+@pytest.fixture(name='region', scope='function')
 def region_fixture():
     region = 'ca-central-1'
-    os.environ['AWS_DEFAULT_REGION'] = region
+    os.environ[AWS_DEFAULT_REGION] = region
     yield region
-    del os.environ['AWS_DEFAULT_REGION']
+    del os.environ[AWS_DEFAULT_REGION]
 
 
 @pytest.fixture(name='security_group', scope='function')
@@ -34,16 +35,17 @@ def security_group_fixture():
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_version_command(mock_stdout):
     # Given
-    options = Namespace()
-    options.version = "1.2.3"
+    opt = Namespace()
+    opt.version = "1.2.3"
 
     # When
-    commands.cmd_version(options)
+    commands.cmd_version(opt)
 
     # Then
     assert mock_stdout.getvalue() == "awswl v1.2.3\n"
 
 
+# noinspection PyUnusedLocal
 def test_list_command_lists_no_blocks(region, security_group):
     assert_list_output(options(security_group), "No CIDR blocks authorized for SSH")
 
@@ -77,24 +79,26 @@ def test_list_command_identifies_enclosing_blocks(region, security_group):
         ["- 192.0.2.1/32 (current)\n", "- 192.0.2.0/24 (current)\n", "- 192.0.1.0/24\n"]
     )
 
+
 @mock_ec2
 def test_list_command_without_region_shows_error():
     assert 'AWS_DEFAULT_REGION' not in os.environ
-    options = Namespace()
-    options.sgid='sg-12345'
-    assert_list_output(options,"No AWS region specified")
+    opt = Namespace()
+    opt.sgid = 'sg-12345'
+    assert_list_output(opt, "No AWS region specified")
+
 
 def options(security_group):
-    options = Namespace()
-    options.sgid = security_group.id
-    options.ssh_port = 22
-    return options
+    opt = Namespace()
+    opt.sgid = security_group.id
+    opt.ssh_port = 22
+    return opt
 
 
 @patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
 @patch('sys.stdout', new_callable=io.StringIO)
-def assert_list_output(options, matches, mock_stdout, exip_method):
-    commands.cmd_list(options)
+def assert_list_output(opt, matches, mock_stdout, exip_method):
+    commands.cmd_list(opt)
     output = mock_stdout.getvalue()
     if isinstance(matches, str):
         assert matches in output
@@ -102,7 +106,21 @@ def assert_list_output(options, matches, mock_stdout, exip_method):
         for match in matches:
             assert match in output
 
-# TODO: List Ipv6 (https://github.com/spulec/moto/issues/1523)
 
-# TODO: Add Current
-# TODO: Remove Current
+@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
+@patch('sys.stdout', new_callable=io.StringIO)
+def test_remove_current_removes_permission(mock_stdout, exip_method, region, security_group):
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [
+            {'CidrIp': '192.0.2.1/32'},
+        ],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(security_group)
+    commands.cmd_remove_current(opt)
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert not after_group.ip_permissions
+    assert "Removed current ip address" in mock_stdout.getvalue()

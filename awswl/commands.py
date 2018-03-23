@@ -16,8 +16,8 @@ def cmd_list(options):
         ssh_permissions = [
             permission
             for permission in security_group.ip_permissions
-            if permission['IpProtocol'] == 'tcp' and permission['ToPort'] <= options.ssh_port and
-               permission['FromPort'] >= options.ssh_port
+            if permission['IpProtocol'] == 'tcp' and
+               permission['ToPort'] <= options.ssh_port <= permission['FromPort']
         ]
         authorized_blocks = [
             ip_network(ip_range['CidrIp'])
@@ -52,10 +52,19 @@ def cmd_add_current(options):
         ec2 = boto3.resource('ec2')
         security_group = ec2.SecurityGroup(options.sgid)
         security_group.authorize_ingress(
-            CidrIp=cidr,
-            IpProtocol='tcp',
-            FromPort=options.ssh_port,
-            ToPort=options.ssh_port
+            # FIXME: Workaround for Moto issue: https://github.com/spulec/moto/issues/1522
+            # CidrIp=cidr,
+            # IpProtocol='tcp',
+            # FromPort=options.ssh_port,
+            # ToPort=options.ssh_port
+            IpPermissions=[
+                {
+                    'IpRanges': [{'CidrIp': cidr}],
+                    'IpProtocol': 'tcp',
+                    'FromPort': options.ssh_port,
+                    'ToPort': options.ssh_port,
+                }
+            ]
         )
         print("Added current ip address as a CIDR block ({0}) to whitelist.".format(cidr))
     except ClientError as e:
@@ -72,10 +81,19 @@ def cmd_remove_current(options):
         ec2 = boto3.resource('ec2')
         security_group = ec2.SecurityGroup(options.sgid)
         security_group.revoke_ingress(
-            CidrIp=cidr,
-            IpProtocol='tcp',
-            FromPort=options.ssh_port,
-            ToPort=options.ssh_port
+            # FIXME: Workaround for Moto issue: https://github.com/spulec/moto/issues/1522
+            # CidrIp=cidr,
+            # IpProtocol='tcp',
+            # FromPort=options.ssh_port,
+            # ToPort=options.ssh_port
+            IpPermissions=[
+                {
+                    'IpRanges': [{'CidrIp': cidr}],
+                    'IpProtocol': 'tcp',
+                    'FromPort': options.ssh_port,
+                    'ToPort': options.ssh_port,
+                }
+            ]
         )
         print("Removed current ip address as a CIDR block ({0}) from whitelist.".format(cidr))
     except ClientError as e:
