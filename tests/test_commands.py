@@ -124,3 +124,10 @@ def test_remove_current_removes_permission(mock_stdout, exip_method, region, sec
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     assert not after_group.ip_permissions
     assert "Removed current ip address" in mock_stdout.getvalue()
+
+@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
+@patch('sys.stdout', new_callable=io.StringIO)
+def test_remove_current_removes_permission_notfound(mock_stdout, exip_method, region, security_group):
+    opt = options(security_group)
+    commands.cmd_remove_current(opt)
+    assert "Current IP address does not seem to be whitelisted." in mock_stdout.getvalue()

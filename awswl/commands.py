@@ -97,8 +97,8 @@ def cmd_remove_current(options):
         )
         print("Removed current ip address as a CIDR block ({0}) from whitelist.".format(cidr))
     except ClientError as e:
-        if e.response['Error']['Code'] == "InvalidPermission.Duplicate":
-            print("Current IP address is already whitelisted.")
+        if e.response['Error']['Code'] == "InvalidPermission.NotFound":
+            print("Current IP address does not seem to be whitelisted.")
         else:
             print(e)
 
