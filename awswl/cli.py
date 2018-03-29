@@ -34,6 +34,9 @@ def parse_args(args):
         help='The port used for SSH. By default this is port 22, but some people '
              'prefer to access SSH over another port.'
     )
+    parser.add_argument(
+        '--add', action='append', dest='add_blocks',
+        help="Adds a manually-specified CIDR block (###.###.###.###/##) to the whitelist."
+    )
 
-    # TODO: Add, Remove
     return parser.parse_args(args)

@@ -39,6 +39,7 @@ def cmd_list(options):
                     print("- {0}".format(block))
         else:
             print("No CIDR blocks authorized for SSH.")
+        print("")
     except botocore.exceptions.NoRegionError:
         print("No AWS region specified (AWS configuration/environment variables).")
     except ClientError as e:
@@ -46,9 +47,13 @@ def cmd_list(options):
 
 
 def cmd_add_current(options):
+    external_ip = externalip.get_external_ip()
+    cidr = "{0}/32".format(external_ip)
+    whitelist_cidr(options, "current external IP address", cidr)
+
+
+def whitelist_cidr(options, description, cidr):
     try:
-        external_ip = externalip.get_external_ip()
-        cidr = "{0}/32".format(external_ip)
         ec2 = boto3.resource('ec2')
         security_group = ec2.SecurityGroup(options.sgid)
         security_group.authorize_ingress(
@@ -66,7 +71,7 @@ def cmd_add_current(options):
                 }
             ]
         )
-        print("Added current ip address as a CIDR block ({0}) to whitelist.".format(cidr))
+        print("Added {0} CIDR block ({1}) to whitelist.".format(description, cidr))
     except ClientError as e:
         if e.response['Error']['Code'] == "InvalidPermission.Duplicate":
             print("Current IP address is already whitelisted.")
@@ -105,3 +110,12 @@ def cmd_remove_current(options):
 
 def cmd_version(options):
     print("awswl v{0}".format(options.version))
+
+
+def cmd_add(options, cidr_block):
+    try:
+        network = ip_network(cidr_block,strict=False)
+        whitelist_cidr(options, "specified", str(network))
+    except ValueError as e:
+        print("Add error: {0}\n".format(str(e)))
+        return
