@@ -58,6 +58,18 @@ Remove authorization for your current IP:
 
     $ awswl --remove-current
 
+Authorize a manually-specified CIDR block:
+
+.. code-block:: bash
+
+    $ awswl --add 192.168.0.0/24
+
+Remove authorization for a manually-specified CIDR block:
+
+.. code-block:: bash
+
+    $ awswl --remove 192.168.0.0/24
+
 For each of these commands, you need to tell awswl which security group to use, which you can do
 with the ``--sgid`` command-line option or using an environment variable.
 
@@ -69,3 +81,4 @@ All of these require you to have AWS credentials set up in advance, stored in ``
 and if you need to use a profile, you can configure it with ``AWS_PROFILE``. If you want to identify
 the security group using a command-line variable so that you don't have to put it into each command
 invocation, you can put it in ``AWSWL_SGID``.
+
