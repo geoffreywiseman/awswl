@@ -105,7 +105,7 @@ def remove_cidr(options, description, cidr):
                 }
             ]
         )
-        print("Removed {0} CIDR block ({0}) from whitelist.".format(description, cidr))
+        print("Removed {0} CIDR block ({1}) from whitelist.".format(description, cidr))
     except ClientError as e:
         if e.response['Error']['Code'] == "InvalidPermission.NotFound":
             cap_desc = description[0].capitalize() + description[1:]
