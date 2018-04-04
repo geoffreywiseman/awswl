@@ -23,7 +23,14 @@ def execute(options):
                     print("Unexpected command: {0}".format(command_name))
         if options.add_blocks:
             for cidr_block in options.add_blocks:
-                commands.cmd_add(options,cidr_block)
+                commands.cmd_add(options, cidr_block)
+        if options.remove_blocks:
+            for cidr_block in options.remove_blocks:
+                commands.cmd_remove(options, cidr_block)
+
+
+def has_action(options):
+    return not options.actions and not options.add_blocks and not options.remove_blocks
 
 
 def validate_options(options):
@@ -32,7 +39,7 @@ def validate_options(options):
             "No security group specified as an argument with --sgid or in the environment "
             "as AWSWL_SGID. Cannot proceed.")
         return False
-    elif not options.actions and not options.add_blocks:
+    elif has_action(options):
         print(
             "You haven't asked AWSWL to do anything. Try `awswl --help` to get started?.")
         return False

@@ -109,34 +109,6 @@ def assert_list_output(opt, matches, mock_stdout, exip_method):
 
 @patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
 @patch('sys.stdout', new_callable=io.StringIO)
-def test_remove_current_removes_permission(mock_stdout, exip_method, region, security_group):
-    security_group.authorize_ingress(IpPermissions=[{
-        'IpRanges': [
-            {'CidrIp': '192.0.2.1/32'},
-        ],
-        'IpProtocol': 'tcp',
-        'FromPort': 22,
-        'ToPort': 22
-    }])
-    opt = options(security_group)
-    commands.cmd_remove_current(opt)
-
-    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
-    assert not after_group.ip_permissions
-    assert "Removed current ip address" in mock_stdout.getvalue()
-
-
-@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
-@patch('sys.stdout', new_callable=io.StringIO)
-def test_remove_current_removes_permission_notfound(mock_stdout, exip_method, region,
-    security_group):
-    opt = options(security_group)
-    commands.cmd_remove_current(opt)
-    assert "Current IP address does not seem to be whitelisted." in mock_stdout.getvalue()
-
-
-@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
-@patch('sys.stdout', new_callable=io.StringIO)
 def test_add_current_adds_permission(mock_stdout, exip_method, region, security_group):
     assert not security_group.ip_permissions
     opt = options(security_group)
@@ -147,7 +119,7 @@ def test_add_current_adds_permission(mock_stdout, exip_method, region, security_
     ranges = after_group.ip_permissions[0]['IpRanges']
     assert len(ranges) == 1
     assert ranges[0]['CidrIp'] == '192.0.2.1/32'
-    assert "Added current external IP address" in mock_stdout.getvalue()
+    assert "Added current external IP address as a CIDR block" in mock_stdout.getvalue()
 
 
 @patch('sys.stdout', new_callable=io.StringIO)
@@ -162,3 +134,56 @@ def test_add_adds_specified_permission(mock_stdout, region, security_group):
     assert len(ranges) == 1
     assert ranges[0]['CidrIp'] == '192.0.2.0/24'
     assert "Added specified CIDR block" in mock_stdout.getvalue()
+
+
+@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
+@patch('sys.stdout', new_callable=io.StringIO)
+def test_remove_current_removes_permission(mock_stdout, exip_method, region, security_group):
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [
+            {'CidrIp': '192.0.2.1/32'},
+        ],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(security_group)
+    commands.cmd_remove_current(opt)
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert not after_group.ip_permissions
+    assert "Removed current external IP address as a CIDR block" in mock_stdout.getvalue()
+
+
+@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
+@patch('sys.stdout', new_callable=io.StringIO)
+def test_remove_current_indicates_notfound(mock_stdout, exip_method, region, security_group):
+    opt = options(security_group)
+    commands.cmd_remove_current(opt)
+    assert "Current external IP address as a CIDR block does not seem to be whitelisted." in mock_stdout.getvalue()
+
+
+@patch('sys.stdout', new_callable=io.StringIO)
+def test_remove_removes_specified(mock_stdout, region, security_group):
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [
+            {'CidrIp': '192.0.2.1/32'},
+        ],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(security_group)
+    commands.cmd_remove(opt,'192.0.2.1/32')
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert not after_group.ip_permissions
+    assert "Removed specified CIDR block" in mock_stdout.getvalue()
+
+
+@patch('sys.stdout', new_callable=io.StringIO)
+def test_remove_specified_indicates_notfound(mock_stdout, region, security_group):
+    opt = options(security_group)
+    commands.cmd_remove(opt,'192.0.2.1/32')
+    assert "Specified CIDR block does not seem to be whitelisted." in mock_stdout.getvalue()
+

@@ -36,7 +36,11 @@ def parse_args(args):
     )
     parser.add_argument(
         '--add', action='append', dest='add_blocks',
-        help="Adds a manually-specified CIDR block (###.###.###.###/##) to the whitelist."
+        help="Adds a manually-specified CIDR block from the whitelist."
+    )
+    parser.add_argument(
+        '--remove', action='append', dest='remove_blocks',
+        help="Removes a manually-specified CIDR block from the whitelist."
     )
 
     return parser.parse_args(args)

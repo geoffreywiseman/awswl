@@ -49,10 +49,10 @@ def cmd_list(options):
 def cmd_add_current(options):
     external_ip = externalip.get_external_ip()
     cidr = "{0}/32".format(external_ip)
-    whitelist_cidr(options, "current external IP address", cidr)
+    add_cidr(options, "current external IP address as a", cidr)
 
 
-def whitelist_cidr(options, description, cidr):
+def add_cidr(options, description, cidr):
     try:
         ec2 = boto3.resource('ec2')
         security_group = ec2.SecurityGroup(options.sgid)
@@ -74,15 +74,20 @@ def whitelist_cidr(options, description, cidr):
         print("Added {0} CIDR block ({1}) to whitelist.".format(description, cidr))
     except ClientError as e:
         if e.response['Error']['Code'] == "InvalidPermission.Duplicate":
-            print("Current IP address is already whitelisted.")
+            cap_desc = description[0].capitalize() + description[1:]
+            print("{0} is already whitelisted.".format(cap_desc))
         else:
             print(e)
 
 
 def cmd_remove_current(options):
+    external_ip = externalip.get_external_ip()
+    cidr = "{0}/32".format(external_ip)
+    remove_cidr(options, "current external IP address as a", cidr)
+
+
+def remove_cidr(options, description, cidr):
     try:
-        external_ip = externalip.get_external_ip()
-        cidr = "{0}/32".format(external_ip)
         ec2 = boto3.resource('ec2')
         security_group = ec2.SecurityGroup(options.sgid)
         security_group.revoke_ingress(
@@ -100,10 +105,11 @@ def cmd_remove_current(options):
                 }
             ]
         )
-        print("Removed current ip address as a CIDR block ({0}) from whitelist.".format(cidr))
+        print("Removed {0} CIDR block ({0}) from whitelist.".format(description, cidr))
     except ClientError as e:
         if e.response['Error']['Code'] == "InvalidPermission.NotFound":
-            print("Current IP address does not seem to be whitelisted.")
+            cap_desc = description[0].capitalize() + description[1:]
+            print("{0} CIDR block does not seem to be whitelisted.".format(cap_desc))
         else:
             print(e)
 
@@ -114,8 +120,17 @@ def cmd_version(options):
 
 def cmd_add(options, cidr_block):
     try:
-        network = ip_network(cidr_block,strict=False)
-        whitelist_cidr(options, "specified", str(network))
+        network = ip_network(cidr_block, strict=False)
+        add_cidr(options, "specified", str(network))
     except ValueError as e:
         print("Add error: {0}\n".format(str(e)))
+        return
+
+
+def cmd_remove(options, cidr_block):
+    try:
+        network = ip_network(cidr_block, strict=False)
+        remove_cidr(options, "specified", str(network))
+    except ValueError as e:
+        print("Remove error: {0}\n".format(str(e)))
         return
