@@ -18,7 +18,5 @@ pytest = "*"
 moto = "*"
 twine = "*"
 
+mock = {markers="python_version < '3.3'"}
 
-[requires]
-
-python_version = "3.6"
