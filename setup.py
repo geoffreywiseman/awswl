@@ -124,7 +124,9 @@ setup(
     },
 
     tests_require=[
-        'pytest', 'moto'
+        "mock ; python_version<'3.3'"
+        'pytest',
+        'moto'
     ],
 
     # If there are data files included in your packages that need to be
