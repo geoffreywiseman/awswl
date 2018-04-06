@@ -124,7 +124,7 @@ setup(
     },
 
     tests_require=[
-        "mock ; python_version<'3.3'"
+        "mock ; python_version<'3.3'",
         'pytest',
         'moto'
     ],
