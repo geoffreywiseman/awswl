@@ -31,7 +31,7 @@ This is a python tool, packaged as a python module, so you should be able to jus
 Of course, if you don't know what a python module is, or you don't have python and pip installed,
 you may have additional work ahead of you.
 
-The `awswl` module should be compatible with both python2 and python3; I have Travis building it
+The ``awswl`` module should be compatible with both python2 and python3; I have Travis building it
 for Python 2.7, 3.4, 3.5, and 3.6.
 
 Usage
@@ -43,7 +43,7 @@ If you want usage help at the command line, try:
 
     $ awswl --help
 
-You can list the IP address blocks that are authorized:
+You can list the IP address blocks that are authorized, including which ip address is current:
 
 .. code-block:: bash
 
@@ -77,6 +77,15 @@ For each of these commands, you need to tell awswl which security group to use, 
 with the ``--sgid`` command-line option or using an environment variable.
 
 
+Integration
+-----------
+In order to get your current ip address, ``--list``, ``--add-current`` and ``--remove-current``
+will make a request to ``api.ipify.org``. I may `add a switch`_ to disable that for the privacy-
+inclined, but feel free to vote for it.
+
+.. _add a switch: https://github.com/geoffreywiseman/awswl/issues/3
+
+
 Environment
 -----------
 
@@ -85,3 +94,37 @@ and if you need to use a profile, you can configure it with ``AWS_PROFILE``. If 
 the security group using a command-line variable so that you don't have to put it into each command
 invocation, you can put it in ``AWSWL_SGID``.
 
+
+Edge Cases
+----------
+For simple use cases, ``awswl`` does everything I want it to do, but it's currently a pretty thin
+wrapper over the AWS API for authorizing and revoking access via security groups, and as a result
+it doesn't do much pre-processing or validating of your requests. There are cases that it doesn't
+address. What it's good at is adding and removing simple rules containing a simple CIDR block
+and a single port from a security group.
+
+For instance if you remove a block that isn't present, AWS may simply ignore the request, because
+the result matches the desired state -- the block isn't authorized. AWSWL doesn't check in advance
+that the block is present, so it doesn't add any messaging to explain that the block wasn't removed
+because it wasn't present. This is mostly fine, unless you accidentally mistyped, and you failed to
+remove a block as a result.
+
+Similarly, if what you've asked for requires a complex modification of a rule, AWSWL won't
+compare your request against the authorized rules and make a plan of action that achieves the
+desired result. So if there's already a permission that authorizes a set of CIDR blocks, and you
+ask to remove one of those CIDR blocks, AWSWL will pass your request on to AWS, which will check
+to see if there's a single permission matching your request to revoke, not find it, and not
+throw an error, and AWSWL will respond that your action succeeded when in fact, nothing changed,
+and the CIDR block you specified may still be authorized.
+
+Similarly, if you ask AWSWL to revoke permissions on a CIDR block that is narrower than the
+authorization, you aren't likely to get the desired result. For instance, if you authorize
+192.168.0.0/16 and then revoke 192.168.0.0/24 you could argue that the result should be
+192.168.1.0/24 all the way through 192.168.255.0/24 authorized and 192.168.0.0/24 not authorized,
+but that's definitely not what will happen.
+
+Similarly it can't modify a permission block that includes a bunch of ports, including SSH.
+
+To be honest, I am not sure it makes a lot of sense to address those issues so that it can modify
+rules like that, but I would prefer it to notice when situations like that are present and warn
+about the rules that it didn't modify -- essentially, I'd like it to validate a bit better.
