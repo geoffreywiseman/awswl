@@ -89,10 +89,10 @@ inclined, but feel free to vote for it.
 Environment
 -----------
 
-All of these require you to have AWS credentials set up in advance, stored in ``~/.aws/credentials``,
-and if you need to use a profile, you can configure it with ``AWS_PROFILE``. If you want to identify
-the security group using a command-line variable so that you don't have to put it into each command
-invocation, you can put it in ``AWSWL_SGID``.
+All of these require you to have AWS credentials set up in advance, stored in
+``~/.aws/credentials``, and if you need to use a profile, you can configure it with
+``AWS_PROFILE``. If you want to identify the security group using a command-line variable so that
+you don't have to put it into each command invocation, you can put it in ``AWSWL_SGID``.
 
 
 Edge Cases
