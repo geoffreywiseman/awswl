@@ -110,7 +110,7 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
         "ipaddress ; python_version<'3.0'",
-        'boto3', 'requests', 'botocore'
+        "future", 'boto3', 'requests', 'botocore'
     ],
 
     # List additional groups of dependencies here (e.g. development
