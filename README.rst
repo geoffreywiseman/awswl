@@ -10,7 +10,9 @@ A small tool to make it pretty simple to add and remove ip addresses (or CIDR bl
 security group. This acts like a sort of oversimplified VPN, where you can quickly give yourself
 SSH access to a project as you move about from network to network.
 
-You can read about recent changes in the [CHANGELOG](CHANGELOG.md).
+You can read about recent changes in the CHANGELOG_.
+
+.. _CHANGELOG: CHANGELOG.md
 
 Better Solutions
 ----------------
