@@ -38,7 +38,7 @@ Of course, if you don't know what a python module is, or you don't have python a
 you may have additional work ahead of you.
 
 The ``awswl`` module should be compatible with both python2 and python3; I have Travis building it
-for Python 2.7, 3.4, 3.5, and 3.6.
+for Python 2.7, 3.5, 3.6, and 3.7.
 
 Usage
 -----
