@@ -12,11 +12,13 @@ Pipfile.lock
 /build
 /dist
 *.egg-info
+.eggs/
 
 # IntelliJ
 /.idea
 
 # Direnv
+/.env
 /.envrc
 /.direnv
 
