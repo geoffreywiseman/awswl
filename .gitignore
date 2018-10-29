@@ -1,6 +1,12 @@
 # Python
 __pycache__/
 .pytest_cache/
+*.pyc
+# Ignore if targeting multiple versions of Python
+Pipfile.lock
+
+# Python Venv
+/venv
 
 # Python: Build and Distribute
 /build
