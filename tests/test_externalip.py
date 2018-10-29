@@ -1,6 +1,10 @@
 from awswl import externalip
-from unittest.mock import patch
 from argparse import Namespace
+
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
 
 
 @patch('requests.get')

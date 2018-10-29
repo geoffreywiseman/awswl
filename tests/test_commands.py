@@ -3,10 +3,14 @@ import boto3
 import pytest
 
 from moto import mock_ec2
-from unittest.mock import patch
 from argparse import Namespace
 from awswl import commands
 import os
+
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
 
 AWS_DEFAULT_REGION = 'AWS_DEFAULT_REGION'
 
