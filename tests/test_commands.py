@@ -20,12 +20,14 @@ def region_fixture():
     region = 'ca-central-1'
     os.environ[AWS_DEFAULT_REGION] = region
     yield region
-    del os.environ[AWS_DEFAULT_REGION]
+    if AWS_DEFAULT_REGION in os.environ:
+        del os.environ[AWS_DEFAULT_REGION]
 
 
 @pytest.fixture(name='security_group', scope='function')
 def security_group_fixture():
-    mock_ec2().start()
+    mock = mock_ec2()
+    mock.start()
     ec2 = boto3.resource('ec2')
     sg = ec2.create_security_group(
         Description='Security Group for SSH Whitelisting',
@@ -33,7 +35,7 @@ def security_group_fixture():
         VpcId='vpc-123'
     )
     yield sg
-    mock_ec2().stop()
+    mock.stop()
 
 
 @patch('sys.stdout', new_callable=io.StringIO)
