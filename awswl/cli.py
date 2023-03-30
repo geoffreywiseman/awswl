@@ -6,8 +6,8 @@ AWSWL_SGID_KEY = 'AWSWL_SGID'
 
 def parse_args(args):
     parser = argparse.ArgumentParser(
-        description='Maintains a list of whitelisted CIDR blocks granted SSH access to AWS via a '
-                    'security group.'
+        description='Maintains a list of whitelisted CIDR blocks granted SSH access to '
+                    'AWS via a security group.'
     )
     parser.add_argument(
         '--list', action='append_const', dest='actions', const='cmd_list',
@@ -18,7 +18,8 @@ def parse_args(args):
         help='Adds the current IP address to the whitelist.'
     )
     parser.add_argument(
-        '--remove-current', action='append_const', dest='actions', const='cmd_remove_current',
+        '--remove-current', action='append_const', dest='actions',
+        const='cmd_remove_current',
         help='Remove the current IP address from the whitelist.'
     )
     parser.add_argument(

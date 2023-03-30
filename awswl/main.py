@@ -36,11 +36,14 @@ def has_action(options):
 def validate_options(options):
     if not options.sgid:
         print(
-            "No security group specified as an argument with --sgid or in the environment "
-            "as AWSWL_SGID. Cannot proceed.")
+            "No security group specified as an argument with --sgid or in the "
+            "environment as AWSWL_SGID. Cannot proceed."
+        )
         return False
     elif has_action(options):
         print(
-            "You haven't asked AWSWL to do anything. Try `awswl --help` to get started?.")
+            "You haven't asked AWSWL to do anything. "
+            "Try `awswl --help` to get started?"
+        )
         return False
     return True

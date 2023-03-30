@@ -146,7 +146,8 @@ def test_add_adds_specified_permission(mock_stdout, region, security_group):
 
 @patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
 @patch('sys.stdout', new_callable=io.StringIO)
-def test_remove_current_removes_permission(mock_stdout, exip_method, region, security_group):
+def test_remove_current_removes_permission(mock_stdout, exip_method, region,
+                                           security_group):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [
             {'CidrIp': '192.0.2.1/32'},
@@ -160,15 +161,19 @@ def test_remove_current_removes_permission(mock_stdout, exip_method, region, sec
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     assert not after_group.ip_permissions
-    assert "Removed current external IP address as a CIDR block" in mock_stdout.getvalue()
+    assert "Removed current external IP address as a CIDR block" \
+           in mock_stdout.getvalue()
 
 
 @patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
 @patch('sys.stdout', new_callable=io.StringIO)
-def test_remove_current_indicates_notfound(mock_stdout, exip_method, region, security_group):
+def test_remove_current_indicates_notfound(mock_stdout, exip_method, region,
+                                           security_group):
     opt = options(security_group)
     commands.cmd_remove_current(opt)
-    assert "Current external IP address as a CIDR block does not seem to be whitelisted." in mock_stdout.getvalue()
+    assert \
+        "Current external IP address as a CIDR block does not seem to be whitelisted." \
+        in mock_stdout.getvalue()
 
 
 @patch('sys.stdout', new_callable=io.StringIO)
@@ -182,7 +187,7 @@ def test_remove_removes_specified(mock_stdout, region, security_group):
         'ToPort': 22
     }])
     opt = options(security_group)
-    commands.cmd_remove(opt,'192.0.2.1/32')
+    commands.cmd_remove(opt, '192.0.2.1/32')
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     assert not after_group.ip_permissions
@@ -192,6 +197,6 @@ def test_remove_removes_specified(mock_stdout, region, security_group):
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_remove_specified_indicates_notfound(mock_stdout, region, security_group):
     opt = options(security_group)
-    commands.cmd_remove(opt,'192.0.2.1/32')
-    assert "Specified CIDR block does not seem to be whitelisted." in mock_stdout.getvalue()
-
+    commands.cmd_remove(opt, '192.0.2.1/32')
+    assert "Specified CIDR block does not seem to be whitelisted." \
+           in mock_stdout.getvalue()
