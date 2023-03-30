@@ -1,8 +1,8 @@
 AWS Whitelist
 =============
 
-.. image:: https://travis-ci.org/geoffreywiseman/awswl.svg?branch=master
-    :target: https://travis-ci.org/geoffreywiseman/awswl
+.. image:: https://github.com/geoffreywiseman/awswl/actions/workflows/ci.yml/badge.svg
+    :target: https://github.com/geoffreywiseman/awswl/actions/workflows/ci.yml
 .. image:: http://pepy.tech/badge/awswl
     :target: http://pepy.tech/count/awswl
 
