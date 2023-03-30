@@ -32,5 +32,8 @@ jobs:
       - name: Install Dependencies
         run: poetry install
 
+      - name: Lint
+        run: poetry run ruff .
+
       - name: Test
         run: poetry run pytest
