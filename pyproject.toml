@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "awswl"
+version = "1.1.0"
+description = "A project to make it simple to add/remove ip addresses (or CIDR blocks) from an AWS Security group."
+authors = [
+    "Geoffrey Wiseman <geoffrey.wiseman@codiform.com>"
+]
+license = "Public Domain"
+readme = "README.md"
+repository = "https://github.com/geoffreywiseman/awswl"
+homepage = "https://github.com/geoffreywiseman/awswl"
+keywords = ["aws", "vpn", "securitygroups", "security", "networking", "allowlist", "ssh", "firewall", "utility"]
+classifiers = [
+    "Classifier: Development Status :: 5 - Production/Stable",
+    "Classifier: Intended Audience :: Developers",
+    "Classifier: Topic :: System :: Networking",
+    "Classifier: Topic :: System :: Networking :: Firewalls",
+    "Classifier: License :: Public Domain",
+    "Classifier: Programming Language :: Python :: 2",
+    "Classifier: Programming Language :: Python :: 2.7",
+    "Classifier: Programming Language :: Python :: 3",
+    "Classifier: Programming Language :: Python :: 3.4",
+    "Classifier: Programming Language :: Python :: 3.5",
+    "Classifier: Programming Language :: Python :: 3.6"
+]
+
+[tool.poetry.scripts]
+awswl = "awswl.main:main"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+ipaddress = "^1.0.23"
+boto3 = "^1.26.102"
+requests = "^2.28.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.2"
+moto = "^4.1.6"
+mock = "^5.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,21 +1,16 @@
-AWS Whitelist
-=============
+# AWS Whitelist
 
-.. image:: https://github.com/geoffreywiseman/awswl/actions/workflows/ci.yml/badge.svg
-    :target: https://github.com/geoffreywiseman/awswl/actions/workflows/ci.yml
-.. image:: http://pepy.tech/badge/awswl
-    :target: http://pepy.tech/count/awswl
+[![ci](https://github.com/geoffreywiseman/awswl/actions/workflows/ci.yml/badge.svg)](https://github.com/geoffreywiseman/awswl/actions/workflows/ci.yml)
+[![downloads](http://pepy.tech/badge/awswl)](http://pepy.tech/count/awswl)
 
 A small tool to make it pretty simple to add and remove ip addresses (or CIDR blocks) from an AWS
 security group. This acts like a sort of oversimplified VPN, where you can quickly give yourself
 SSH access to a project as you move about from network to network.
 
-You can read about recent changes in the CHANGELOG_.
+You can read about recent changes in the [CHANGELOG](CHANGELOG.md).
 
-.. _CHANGELOG: CHANGELOG.md
 
-Better Solutions
-----------------
+## Better Solutions
 
 Anyone who knows enough to use a tool like this likely knows that there are better options 
 available, from hardware VPNs to software VPNs hosted on an EC2 instance, and so forth. If you
@@ -25,66 +20,63 @@ look at the better options, and see if they fit your needs.
 Of course, most of those other options require you to get additional hardware or software resources 
 involved and might come with costs. I understand, that's why I made a little tool to make do.
 
-Installing
-----------
+## Installing
 
 This is a python tool, packaged as a python module, so you should be able to just run
 
-.. code-block:: bash
-
-    $ pip install awswl
+```bash
+pip install awswl
+```    
 
 Of course, if you don't know what a python module is, or you don't have python and pip installed,
 you may have additional work ahead of you.
 
-The ``awswl`` module should be compatible with both python2 and python3; I have Travis building it
-for Python 2.7, 3.5, 3.6, and 3.7.
+Now that Python2 is largely a relic of the past, I'm focused on supporting Python 3 only. The current CI build is for Python 3.9+.
 
-Usage
------
+## Usage
 
 If you want usage help at the command line, try:
 
-.. code-block:: bash
-
-    $ awswl --help
+```bash
+awswl --help
+```
 
 You can list the IP address blocks that are authorized, including which ip address is current:
 
-.. code-block:: bash
-
-    $ awswl --list
+```bash
+awswl --list
+```
 
 Authorize your current IP Address:
 
-.. code-block:: bash
-
-    $ awswl --add-current
+```bash
+awswl --add-current
+```
 
 Remove authorization for your current IP:
 
-.. code-block:: bash
-
-    $ awswl --remove-current
+```bash
+awswl --remove-current
+```
 
 Authorize a manually-specified CIDR block:
 
-.. code-block:: bash
-
-    $ awswl --add 192.168.0.0/24
+```bash
+awswl --add 192.168.0.0/24
+```
 
 Remove authorization for a manually-specified CIDR block:
 
-.. code-block:: bash
-
-    $ awswl --remove 192.168.0.0/24
+```bash
+awswl --remove 192.168.0.0/24
+```
 
 For each of these commands, you need to tell awswl which security group to use, which you can do
 with the ``--sgid`` command-line option or using an environment variable.
 
 
-Integration
------------
+## Integration
+
 In order to get your current ip address, ``--list``, ``--add-current`` and ``--remove-current``
 will make a request to ``api.ipify.org``. I may `add a switch`_ to disable that for the privacy-
 inclined, but feel free to vote for it.
@@ -92,8 +84,7 @@ inclined, but feel free to vote for it.
 .. _add a switch: https://github.com/geoffreywiseman/awswl/issues/3
 
 
-Environment
------------
+## Environment
 
 All of these require you to have AWS credentials set up in advance, stored in
 ``~/.aws/credentials``, and if you need to use a profile, you can configure it with
@@ -101,8 +92,8 @@ All of these require you to have AWS credentials set up in advance, stored in
 you don't have to put it into each command invocation, you can put it in ``AWSWL_SGID``.
 
 
-Edge Cases
-----------
+## Edge Cases
+
 For simple use cases, ``awswl`` does everything I want it to do, but it's currently a pretty thin
 wrapper over the AWS API for authorizing and revoking access via security groups, and as a result
 it doesn't do much pre-processing or validating of your requests. There are cases that it doesn't
