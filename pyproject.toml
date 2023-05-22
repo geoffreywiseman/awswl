@@ -31,7 +31,7 @@ awswl = "awswl.main:main"
 python = "^3.9"
 ipaddress = "^1.0.23"
 boto3 = "^1.26.102"
-requests = "^2.28.2"
+requests = "^2.31.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.2"
