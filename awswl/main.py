@@ -1,18 +1,19 @@
 import sys
+from argparse import Namespace
 
 from . import cli, commands
-from pkg_resources import resource_string
+from pkg_resources import get_distribution
 
 
 def main():
     args = sys.argv[1:]
     options = cli.parse_args(args)
-    version = resource_string(__name__, 'VERSION').decode('utf8').strip()
+    version = get_distribution('awswl').version
     options.version = version
     execute(options)
 
 
-def execute(options):
+def execute(options: Namespace):
     if validate_options(options):
         if options.actions:
             for command_name in options.actions:
@@ -20,7 +21,7 @@ def execute(options):
                 if command:
                     command(options)
                 else:
-                    print("Unexpected command: {0}".format(command_name))
+                    print(f"Unexpected command: {command_name}")
         if options.add_blocks:
             for cidr_block in options.add_blocks:
                 commands.cmd_add(options, cidr_block)
@@ -29,15 +30,17 @@ def execute(options):
                 commands.cmd_remove(options, cidr_block)
 
 
-def has_action(options):
-    return not options.actions and not options.add_blocks and not options.remove_blocks
+def has_action(options: Namespace):
+    return not options.actions and \
+        not options.add_blocks and \
+        not options.remove_blocks
 
 
 def validate_options(options):
-    if not options.sgid:
+    if not options.sgid and not options.sg_name:
         print(
-            "No security group specified as an argument with --sgid or in the "
-            "environment as AWSWL_SGID. Cannot proceed."
+            "You must specify a security group id (--sgid option, AWSWL_SGID env var) "
+            "or security group name (--sg-name, AWSWL_SGNAME) for awswl to use."
         )
         return False
     elif has_action(options):

@@ -2,6 +2,7 @@ import argparse
 import os
 
 AWSWL_SGID_KEY = 'AWSWL_SGID'
+AWSWL_SGNAME_KEY = 'AWSWL_SGNAME'
 
 
 def parse_args(args):
@@ -29,6 +30,10 @@ def parse_args(args):
     parser.add_argument(
         '--sgid', default=os.environ.get(AWSWL_SGID_KEY),
         help='The security group to use for SSH access.'
+    )
+    parser.add_argument(
+        '--sg-name', default=os.environ.get(AWSWL_SGNAME_KEY),
+        help='The name of the security group to use (wildcards allowed).'
     )
     parser.add_argument(
         '--ssh-port', default=22,

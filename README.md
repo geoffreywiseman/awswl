@@ -14,7 +14,7 @@ You can read about recent changes in the [CHANGELOG](CHANGELOG.md).
 
 Anyone who knows enough to use a tool like this likely knows that there are better options 
 available, from hardware VPNs to software VPNs hosted on an EC2 instance, and so forth. If you
-are using this tool and you haven't even considered using something better, this is your chance:
+are using this tool, and you haven't even considered using something better, this is your chance:
 look at the better options, and see if they fit your needs.
 
 Of course, most of those other options require you to get additional hardware or software resources 
@@ -77,11 +77,11 @@ with the ``--sgid`` command-line option or using an environment variable.
 
 ## Integration
 
-In order to get your current ip address, ``--list``, ``--add-current`` and ``--remove-current``
-will make a request to ``api.ipify.org``. I may `add a switch`_ to disable that for the privacy-
-inclined, but feel free to vote for it.
+In order to get your current ip address, ``--list``, ``--add-current`` and ``--remove-current`` will make a request to ``checkip.amazonaws.org``. Because it's another AWS service, seems less likely to be a privacy concern for anyone.
 
-.. _add a switch: https://github.com/geoffreywiseman/awswl/issues/3
+I may [add a switch](https://github.com/geoffreywiseman/awswl/issues/3) to disable that for the anyone who isn't fond of `awswl` making an additional network request, so if that's a concern for you, feel free to vote for it.
+
+
 
 
 ## Environment
@@ -120,8 +120,8 @@ authorization, you aren't likely to get the desired result. For instance, if you
 192.168.1.0/24 all the way through 192.168.255.0/24 authorized and 192.168.0.0/24 not authorized,
 but that's definitely not what will happen.
 
-Similarly it can't modify a permission block that includes a bunch of ports, including SSH.
+Similarly, it can't modify a permission block that includes a bunch of ports, including SSH.
 
-To be honest, I am not sure it makes a lot of sense to address those issues so that it can modify
+To be honest, I am not sure that it makes a lot of sense to address those issues so that it can modify
 rules like that, but I would prefer it to notice when situations like that are present and warn
 about the rules that it didn't modify -- essentially, I'd like it to validate a bit better.

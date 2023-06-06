@@ -42,3 +42,6 @@ ruff = "^0.0.260"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 120

@@ -1,3 +1,4 @@
+from argparse import Namespace
 from builtins import str
 
 import boto3
@@ -6,15 +7,15 @@ import botocore
 from ipaddress import ip_network, ip_address
 from botocore.exceptions import ClientError
 
-
 from . import externalip
 
 
 def cmd_list(options):
     external_ip = ip_address(str(externalip.get_external_ip()))
     try:
-        ec2 = boto3.resource('ec2')
-        security_group = ec2.SecurityGroup(options.sgid)
+        security_group = get_security_group(options)
+        if not security_group:
+            return
 
         ssh_permissions = [
             permission
@@ -52,48 +53,47 @@ def cmd_list(options):
 def cmd_add_current(options):
     external_ip = externalip.get_external_ip()
     cidr = "{0}/32".format(external_ip)
-    add_cidr(options, "current external IP address as a", cidr)
+    add_cidr(options, "current external IP address as a CIDR block", cidr)
 
 
 def add_cidr(options, description, cidr):
     try:
-        ec2 = boto3.resource('ec2')
-        security_group = ec2.SecurityGroup(options.sgid)
-
-        security_group.authorize_ingress(
-            # FIXME: Workaround for Moto issue: https://github.com/spulec/moto/issues/1522
-            # CidrIp=cidr,
-            # IpProtocol='tcp',
-            # FromPort=options.ssh_port,
-            # ToPort=options.ssh_port
-            IpPermissions=[
-                {
-                    'IpRanges': [{'CidrIp': cidr}],
-                    'IpProtocol': 'tcp',
-                    'FromPort': options.ssh_port,
-                    'ToPort': options.ssh_port,
-                }
-            ]
-        )
-        print("Added {0} CIDR block ({1}) to whitelist.".format(description, cidr))
+        security_group = get_security_group(options)
+        if security_group:
+            security_group.authorize_ingress(
+                # FIXME: Workaround for Moto issue: https://github.com/spulec/moto/issues/1522
+                # CidrIp=cidr,
+                # IpProtocol='tcp',
+                # FromPort=options.ssh_port,
+                # ToPort=options.ssh_port
+                IpPermissions=[
+                    {
+                        'IpRanges': [{'CidrIp': cidr}],
+                        'IpProtocol': 'tcp',
+                        'FromPort': options.ssh_port,
+                        'ToPort': options.ssh_port,
+                    }
+                ]
+            )
+            print("Added {0} ({1}) to whitelist.".format(description, cidr))
     except ClientError as e:
         if e.response['Error']['Code'] == "InvalidPermission.Duplicate":
             cap_desc = description[0].capitalize() + description[1:]
             print("{0} is already whitelisted.".format(cap_desc))
         else:
+            print("Unexpected error")
             print(e)
 
 
 def cmd_remove_current(options):
     external_ip = externalip.get_external_ip()
     cidr = "{0}/32".format(external_ip)
-    remove_cidr(options, "current external IP address as a", cidr)
+    remove_cidr(options, "current external IP address as a CIDR block", cidr)
 
 
 def remove_cidr(options, description, cidr):
     try:
-        ec2 = boto3.resource('ec2')
-        security_group = ec2.SecurityGroup(options.sgid)
+        security_group = get_security_group(options)
         security_group.revoke_ingress(
             # FIXME: Workaround for Moto issue: https://github.com/spulec/moto/issues/1522
             # CidrIp=cidr,
@@ -109,11 +109,11 @@ def remove_cidr(options, description, cidr):
                 }
             ]
         )
-        print("Removed {0} CIDR block ({1}) from whitelist.".format(description, cidr))
+        print("Removed {0} ({1}) from whitelist.".format(description, cidr))
     except ClientError as e:
         if e.response['Error']['Code'] == "InvalidPermission.NotFound":
             cap_desc = description[0].capitalize() + description[1:]
-            print("{0} CIDR block does not seem to be whitelisted.".format(cap_desc))
+            print("{0} does not seem to be whitelisted.".format(cap_desc))
         else:
             print(e)
 
@@ -125,7 +125,7 @@ def cmd_version(options):
 def cmd_add(options, cidr_block):
     try:
         network = ip_network(str(cidr_block), strict=False)
-        add_cidr(options, "specified", network.compressed)
+        add_cidr(options, "specified CIDR block", network.compressed)
     except ValueError as e:
         print("Add error: {0}\n".format(str(e)))
         return
@@ -134,7 +134,37 @@ def cmd_add(options, cidr_block):
 def cmd_remove(options, cidr_block):
     try:
         network = ip_network(str(cidr_block), strict=False)
-        remove_cidr(options, "specified", network.compressed)
+        remove_cidr(options, "specified CIDR block", network.compressed)
     except ValueError as e:
         print("Remove error: {0}\n".format(str(e)))
         return
+
+
+def get_security_group(options: Namespace):
+    ec2 = boto3.resource('ec2')
+    if options.sgid:
+        return ec2.SecurityGroup(options.sgid)
+    else:
+        groups = get_matching_security_groups(options.sg_name)
+        if len(groups) == 0:
+            print(f"Could not find security group with name {options.sg_name}\n")
+        elif len(groups) == 1:
+            [name, sgid] = groups[0]
+            print(f"Using security group {name} ({sgid}).\n")
+            return ec2.SecurityGroup(sgid)
+        else:
+            print(f"Found multiple security group {groups[0]} matching name: ")
+            for group in groups:
+                print(f"- {group[0]} ({group[1]})")
+            print(f"Found multiple security groups matching name {options.sg_name}: {groups}\n")
+
+
+def get_matching_security_groups(sg_name):
+    groups = []
+    pager = boto3.client('ec2').get_paginator('describe_security_groups')
+    # search security groups by name
+    for page in pager.paginate(Filters=[{'Name': 'group-name', 'Values': [sg_name]}]):
+        # append sgid to groups list
+        for group in page['SecurityGroups']:
+            groups.append([group['GroupName'], group['GroupId']])
+    return groups
