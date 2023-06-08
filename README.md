@@ -2,6 +2,8 @@
 
 [![ci](https://github.com/geoffreywiseman/awswl/actions/workflows/ci.yml/badge.svg)](https://github.com/geoffreywiseman/awswl/actions/workflows/ci.yml)
 [![Downloads](https://static.pepy.tech/badge/awswl)](https://pepy.tech/project/awswl)
+[![Documentation](https://readthedocs.org/projects/awswl/badge/)](https://awswl.readthedocs.io/en/latest/)
+
 A small tool to make it pretty simple to add and remove ip addresses (or CIDR blocks) from an AWS
 security group. This acts like a sort of oversimplified VPN, where you can quickly give yourself
 SSH access to a project as you move about from network to network.
