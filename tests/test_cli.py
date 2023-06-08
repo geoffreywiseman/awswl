@@ -16,9 +16,10 @@ def test_parse_empty_arguments():
     options = cli.parse_args([])
     assert options.ssh_port == 22
     assert options.sgid is None
+    assert options.sg_name is None
 
 
-def test_parse_environment_into_arguments(sgid):
+def test_parse_sgid_into_option(sgid):
     options = cli.parse_args([])
     assert options.sgid == sgid
 
@@ -28,3 +29,23 @@ def test_parse_override_defaults(sgid):
     options = cli.parse_args(['--sgid', override])
     assert options.sgid == override
     assert options.sgid != sgid
+
+
+@pytest.fixture(name='sgname')
+def fixture_env_sgname():
+    sgname = "mycorp-prod-bastion"
+    os.environ[cli.AWSWL_SGNAME_KEY] = sgname
+    yield sgname
+    del os.environ[cli.AWSWL_SGNAME_KEY]
+
+
+def test_parse_sgname_env_into_option(sgname):
+    options = cli.parse_args([])
+    assert options.sg_name == sgname
+
+
+def test_override_sgname_env(sgname):
+    override = 'mycorp-beta-bastion'
+    options = cli.parse_args(['--sg-name', override])
+    assert options.sg_name == override
+    assert options.sg_name != sgname
