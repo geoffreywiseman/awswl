@@ -4,3 +4,8 @@ nav:
   - Usage: 'usage.md'
   - Alternatives: 'alternatives.md'
   - Edge Cases: 'edgecases.md'
+
+theme:
+  highlightjs: true
+  hljs_languages:
+      - shell
