@@ -7,6 +7,8 @@ from pkg_resources import get_distribution
 
 def main():
     args = sys.argv[1:]
+    if not args:
+        args = ['--help']
     options = cli.parse_args(args)
     version = get_distribution('awswl').version
     options.version = version
@@ -36,17 +38,29 @@ def has_action(options: Namespace):
         not options.remove_blocks
 
 
+def only_version(options: Namespace):
+    if options.add_blocks:
+        return False
+    if options.remove_blocks:
+        return False
+    if any(act != 'cmd_version' for act in options.actions):
+        return False
+    return True
+
+
 def validate_options(options):
+    if has_action(options):
+        print(
+            "You haven't asked AWSWL to do anything. "
+            "Try `awswl --help` to get started?"
+        )
+        return False
+    if only_version(options):
+        return True
     if not options.sgid and not options.sg_name:
         print(
             "You must specify a security group id (--sgid option, AWSWL_SGID env var) "
             "or security group name (--sg-name, AWSWL_SGNAME) for awswl to use."
-        )
-        return False
-    elif has_action(options):
-        print(
-            "You haven't asked AWSWL to do anything. "
-            "Try `awswl --help` to get started?"
         )
         return False
     return True

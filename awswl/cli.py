@@ -7,7 +7,7 @@ AWSWL_SGNAME_KEY = 'AWSWL_SGNAME'
 
 def parse_args(args):
     parser = argparse.ArgumentParser(
-        description='Maintains a list of whitelisted CIDR blocks granted SSH access to '
+        description='Maintains a list of allowlisted CIDR blocks granted SSH access to '
                     'AWS via a security group.'
     )
     parser.add_argument(
@@ -16,12 +16,12 @@ def parse_args(args):
     )
     parser.add_argument(
         '--add-current', action='append_const', dest='actions', const='cmd_add_current',
-        help='Adds the current IP address to the whitelist.'
+        help='Adds the current IP address to the allowlist.'
     )
     parser.add_argument(
         '--remove-current', action='append_const', dest='actions',
         const='cmd_remove_current',
-        help='Remove the current IP address from the whitelist.'
+        help='Remove the current IP address from the allowlist.'
     )
     parser.add_argument(
         '--version', action='append_const', dest='actions', const='cmd_version',
@@ -42,11 +42,11 @@ def parse_args(args):
     )
     parser.add_argument(
         '--add', action='append', dest='add_blocks',
-        help="Adds a manually-specified CIDR block from the whitelist."
+        help="Adds a manually-specified CIDR block from the allowlist."
     )
     parser.add_argument(
         '--remove', action='append', dest='remove_blocks',
-        help="Removes a manually-specified CIDR block from the whitelist."
+        help="Removes a manually-specified CIDR block from the allowlist."
     )
 
     return parser.parse_args(args)

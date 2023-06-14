@@ -9,8 +9,8 @@
 ## [1.0.0]
 
 ### Added
-- `--list` lists whitelisted CIDR blocks
-- `--add-current` adds your current external ip in CIDR form to the whitelist
-- `--remove-current` to remove your current external ip in CIDR form from the whitelist
-- `--add` to add manually-specified CIDR blocks to the whitelist
-- `--remove` to remove manual CIDR blocks from the whitelist
+- `--list` lists allowlist CIDR blocks
+- `--add-current` adds your current external ip in CIDR form to the allowlist
+- `--remove-current` to remove your current external ip in CIDR form from the allowlist
+- `--add` to add manually-specified CIDR blocks to the allowlist
+- `--remove` to remove manual CIDR blocks from the allowlist

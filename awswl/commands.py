@@ -75,11 +75,11 @@ def add_cidr(options, description, cidr):
                     }
                 ]
             )
-            print("Added {0} ({1}) to whitelist.".format(description, cidr))
+            print("Added {0} ({1}) to allowlist.".format(description, cidr))
     except ClientError as e:
         if e.response['Error']['Code'] == "InvalidPermission.Duplicate":
             cap_desc = description[0].capitalize() + description[1:]
-            print("{0} is already whitelisted.".format(cap_desc))
+            print("{0} is already allowlisted.".format(cap_desc))
         else:
             print("Unexpected error")
             print(e)
@@ -94,26 +94,27 @@ def cmd_remove_current(options):
 def remove_cidr(options, description, cidr):
     try:
         security_group = get_security_group(options)
-        security_group.revoke_ingress(
-            # FIXME: Workaround for Moto issue: https://github.com/spulec/moto/issues/1522
-            # CidrIp=cidr,
-            # IpProtocol='tcp',
-            # FromPort=options.ssh_port,
-            # ToPort=options.ssh_port
-            IpPermissions=[
-                {
-                    'IpRanges': [{'CidrIp': cidr}],
-                    'IpProtocol': 'tcp',
-                    'FromPort': options.ssh_port,
-                    'ToPort': options.ssh_port,
-                }
-            ]
-        )
-        print("Removed {0} ({1}) from whitelist.".format(description, cidr))
+        if security_group:
+            security_group.revoke_ingress(
+                # FIXME: Workaround for Moto issue: https://github.com/spulec/moto/issues/1522
+                # CidrIp=cidr,
+                # IpProtocol='tcp',
+                # FromPort=options.ssh_port,
+                # ToPort=options.ssh_port
+                IpPermissions=[
+                    {
+                        'IpRanges': [{'CidrIp': cidr}],
+                        'IpProtocol': 'tcp',
+                        'FromPort': options.ssh_port,
+                        'ToPort': options.ssh_port,
+                    }
+                ]
+            )
+            print("Removed {0} ({1}) from allowlist.".format(description, cidr))
     except ClientError as e:
         if e.response['Error']['Code'] == "InvalidPermission.NotFound":
             cap_desc = description[0].capitalize() + description[1:]
-            print("{0} does not seem to be whitelisted.".format(cap_desc))
+            print("{0} does not seem to be allowlisted.".format(cap_desc))
         else:
             print(e)
 
@@ -153,10 +154,9 @@ def get_security_group(options: Namespace):
             print(f"Using security group {name} ({sgid}).\n")
             return ec2.SecurityGroup(sgid)
         else:
-            print(f"Found multiple security group {groups[0]} matching name: ")
+            print(f"Found {len(groups)} security groups matching name: ")
             for group in groups:
                 print(f"- {group[0]} ({group[1]})")
-            print(f"Found multiple security groups matching name {options.sg_name}: {groups}\n")
 
 
 def get_matching_security_groups(sg_name):

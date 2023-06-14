@@ -30,8 +30,8 @@ def security_group_fixture():
     mock.start()
     ec2 = boto3.resource('ec2')
     sg = ec2.create_security_group(
-        Description='Security Group for SSH Whitelisting',
-        GroupName='SSH Whitelist',
+        Description='Security Group for SSH allowlisting',
+        GroupName='SSH allowlist',
         VpcId='vpc-123'
     )
     yield sg
@@ -172,7 +172,7 @@ def test_remove_current_indicates_notfound(mock_stdout, exip_method, region,
     opt = options(security_group)
     commands.cmd_remove_current(opt)
     assert \
-        "Current external IP address as a CIDR block does not seem to be whitelisted." \
+        "Current external IP address as a CIDR block does not seem to be allowlisted." \
         in mock_stdout.getvalue()
 
 
@@ -198,5 +198,5 @@ def test_remove_removes_specified(mock_stdout, region, security_group):
 def test_remove_specified_indicates_notfound(mock_stdout, region, security_group):
     opt = options(security_group)
     commands.cmd_remove(opt, '192.0.2.1/32')
-    assert "Specified CIDR block does not seem to be whitelisted." \
+    assert "Specified CIDR block does not seem to be allowlisted." \
            in mock_stdout.getvalue()

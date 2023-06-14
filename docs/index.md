@@ -10,4 +10,8 @@ In case you're encountering AWSWL without having considered the other options, y
 
 ## Project Name
 
-I named this project when "whitelist" was the most common word for this sort of action. These days, "allowlist" is preferred and is more clear, but renaming the pypy package and cli command will break links, so for now I'm referring to it as "allowlist" even though the repository and cli are named `awswl` instead of `awsal`.
+I named this project when "whitelist" was the traditional and most common word for this sort of thing. In the interim, there's been some good progress on more inclusive language and now I'd say that "allowlist" is both preferred and more clear.
+
+Renaming the pypy package and cli command will break links, so for now I'm referring to it as "allowlist" even though the repository and cli are named `awswl` instead of `awsal`. 
+
+I may get around to renaming the repository, package and cli -- if you feel strongly about it, drop me a line or file an issue.

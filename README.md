@@ -24,7 +24,7 @@ you may have additional work ahead of you.
 
 Now that Python2 is largely a relic of the past, I'm focused on supporting Python 3 only. The current CI build is for Python 3.9+.
 
-## Usage
+## Usage ⌨
 
 If you want usage help at the command line, try:
 
@@ -32,45 +32,7 @@ If you want usage help at the command line, try:
 awswl --help
 ```
 
-You can list the IP address blocks that are authorized, including which ip address is current:
-
-```bash
-awswl --list
-```
-
-Authorize your current IP Address:
-
-```bash
-awswl --add-current
-```
-
-Remove authorization for your current IP:
-
-```bash
-awswl --remove-current
-```
-
-Authorize a manually-specified CIDR block:
-
-```bash
-awswl --add 192.168.0.0/24
-```
-
-Remove authorization for a manually-specified CIDR block:
-
-```bash
-awswl --remove 192.168.0.0/24
-```
-
-For each of these commands, you need to tell awswl which security group to use, which you can do
-with the ``--sgid`` command-line option or using an environment variable.
-
-
-## Integration
-
-In order to get your current ip address, ``--list``, ``--add-current`` and ``--remove-current`` will make a request to ``checkip.amazonaws.org``. Because it's another AWS service, seems less likely to be a privacy concern for anyone.
-
-I may [add a switch](https://github.com/geoffreywiseman/awswl/issues/3) to disable that for the anyone who isn't fond of `awswl` making an additional network request, so if that's a concern for you, feel free to vote for it.
+There's more detailed usage documentation in the documentation, which you can read on [github](docs/usage.md) or [readthedocs](https://awswl.readthedocs.io/en/latest/usage/).
 
 
 ## Environment
