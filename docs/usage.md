@@ -48,11 +48,13 @@ Removed current external IP address as a CIDR block (4.3.2.1/32) from allowlist.
 
 Although I usually want my current external ip address, there are certainly cases where you might want to allow-list a custom CIDR block:
 
-    ❯ awswl --sgid sg-0123456abc --add 8.8.8.8/28
-    Added specified CIDR block (8.8.8.0/28) to allowlist.
-    
-    ❯ awswl --sg-name "*beta-extern*" --remove 8.8.8.8/28
-    Removed specified CIDR block (8.8.8.0/28) from allowlist.
+```shell
+❯ awswl --sgid sg-0123456abc --add 8.8.8.8/28
+Added specified CIDR block (8.8.8.0/28) to allowlist.
+
+❯ awswl --sg-name "*beta-extern*" --remove 8.8.8.8/28
+Removed specified CIDR block (8.8.8.0/28) from allowlist.
+```
 
 ## Required Metadata
 There's a bunch of required metadata to do this properly.
@@ -94,25 +96,29 @@ I may [add a switch](https://github.com/geoffreywiseman/awswl/issues/3) to disab
 
 If you want to get usage help at the command line, use `--help`:
 
-    ❯ awswl --help
-    usage: awswl [-h] [--list] [--add-current] [--remove-current] [--version] [--sgid SGID] [--sg-name SG_NAME] [--ssh-port SSH_PORT] [--add ADD_BLOCKS] [--remove REMOVE_BLOCKS]
-    
-    Maintains a list of allowlisted CIDR blocks granted SSH access to AWS via a security group.
-    
-    options:
-      -h, --help            show this help message and exit
-      --list                Lists the ip addresses in the security group with SSH access.
-      --add-current         Adds the current IP address to the allowlist.
-      --remove-current      Remove the current IP address from the allowlist.
-      --version             Print the current version of awswl.
-      --sgid SGID           The security group to use for SSH access.
-      --sg-name SG_NAME     The name of the security group to use (wildcards allowed).
-      --ssh-port SSH_PORT   The port used for SSH. By default this is port 22, but some people prefer to access SSH over another port.
-      --add ADD_BLOCKS      Adds a manually-specified CIDR block from the allowlist.
-      --remove REMOVE_BLOCKS
-                            Removes a manually-specified CIDR block from the allowlist.
+```shell
+❯ awswl --help
+usage: awswl [-h] [--list] [--add-current] [--remove-current] [--version] [--sgid SGID] [--sg-name SG_NAME] [--ssh-port SSH_PORT] [--add ADD_BLOCKS] [--remove REMOVE_BLOCKS]
+
+Maintains a list of allowlisted CIDR blocks granted SSH access to AWS via a security group.
+
+options:
+  -h, --help            show this help message and exit
+  --list                Lists the ip addresses in the security group with SSH access.
+  --add-current         Adds the current IP address to the allowlist.
+  --remove-current      Remove the current IP address from the allowlist.
+  --version             Print the current version of awswl.
+  --sgid SGID           The security group to use for SSH access.
+  --sg-name SG_NAME     The name of the security group to use (wildcards allowed).
+  --ssh-port SSH_PORT   The port used for SSH. By default this is port 22, but some people prefer to access SSH over another port.
+  --add ADD_BLOCKS      Adds a manually-specified CIDR block from the allowlist.
+  --remove REMOVE_BLOCKS
+                        Removes a manually-specified CIDR block from the allowlist.
+```
 
 To get the current version, `--version`:
 
+```shell
     ❯ awswl --version
     awswl v1.1.0
+```
