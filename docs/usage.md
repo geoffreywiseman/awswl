@@ -8,20 +8,24 @@ These are the most common operations.  I'm going to use made-up ip addresses in 
 
 Often, I'll want to check if my current ip address is in a security group:
 
-    ❯ awswl --sgid sg-0123456abc --list
-    The following CIDR blocks are authorized for SSH:
-    - 192.168.0.0/16
-    - 172.16.0.0/21
-    - 8.8.8.8/32
+```bash
+❯ awswl --sgid sg-0123456abc --list
+The following CIDR blocks are authorized for SSH:
+- 192.168.0.0/16
+- 172.16.0.0/21
+- 8.8.8.8/32
+```
 
 These IP addresses are made up, but if my current external ip address were listed, it should be marked with `(current)`.  This is what it would look like if I were in the list:
 
-    ❯ awswl --sg-name "mycorp-prod-bastion" --list
-    The following CIDR blocks are authorized for SSH:
-    - 192.168.0.0/16
-    - 172.16.0.0/21
-    - 8.8.8.8/32
-    - 1.2.3.4/32 (current)
+```bash
+❯ awswl --sg-name "mycorp-prod-bastion" --list
+The following CIDR blocks are authorized for SSH:
+- 192.168.0.0/16
+- 172.16.0.0/21
+- 8.8.8.8/32
+- 1.2.3.4/32 (current)
+```
 
 ### Adding My Current External IP
 
