@@ -8,7 +8,7 @@ These are the most common operations.  I'm going to use made-up ip addresses in 
 
 Often, I'll want to check if my current ip address is in a security group:
 
-```bash
+```shell
 ❯ awswl --sgid sg-0123456abc --list
 The following CIDR blocks are authorized for SSH:
 - 192.168.0.0/16
@@ -18,7 +18,7 @@ The following CIDR blocks are authorized for SSH:
 
 These IP addresses are made up, but if my current external ip address were listed, it should be marked with `(current)`.  This is what it would look like if I were in the list:
 
-```bash
+```shell
 ❯ awswl --sg-name "mycorp-prod-bastion" --list
 The following CIDR blocks are authorized for SSH:
 - 192.168.0.0/16
@@ -31,16 +31,19 @@ The following CIDR blocks are authorized for SSH:
 
 If I want to give myself access to a security group, I could `--add-current`:
 
-    ❯ awswl --sgid sg-0123456abc --add-current
-    Added current external IP address as a CIDR block (1.2.3.4/32) to allowlist.
+```shell
+❯ awswl --sgid sg-0123456abc --add-current
+Added current external IP address as a CIDR block (1.2.3.4/32) to allowlist.
+```
 
 ### Removing My Current External IP
  
 If I'm working in an environment temporarily, I might want to revoke access as soon as I'm done, using `--remove-current`
 
-    ❯ awswl --sg-name "myorg-jump-host" --remove-current
-    Removed current external IP address as a CIDR block (4.3.2.1/32) from allowlist.
-
+```shell
+❯ awswl --sg-name "myorg-jump-host" --remove-current
+Removed current external IP address as a CIDR block (4.3.2.1/32) from allowlist.
+```
 ### Adding or Removing a Custom CIDR
 
 Although I usually want my current external ip address, there are certainly cases where you might want to allow-list a custom CIDR block:
