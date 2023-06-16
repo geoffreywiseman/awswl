@@ -52,8 +52,12 @@ def test_version_command(mock_stdout):
 
 
 # noinspection PyUnusedLocal
-def test_list_command_lists_no_blocks(region, security_group):
-    assert_list_output(options(security_group), "No CIDR blocks authorized for SSH")
+def test_list_command_lists_no_blocks_sgid(region, security_group):
+    assert_list_output(options(sgid=security_group.id), "No CIDR blocks authorized for SSH")
+
+
+def test_list_command_lists_no_blocks_sgname(region, security_group):
+    assert_list_output(options(sg_name=security_group.group_name), "No CIDR blocks authorized for SSH")
 
 
 def test_list_command_lists_ipv4_blocks(region, security_group):
@@ -66,7 +70,8 @@ def test_list_command_lists_ipv4_blocks(region, security_group):
         'FromPort': 22,
         'ToPort': 22
     }])
-    assert_list_output(options(security_group), ["- 10.0.0.1/32\n", "- 10.0.1.0/24\n"])
+    assert_list_output(options(sgid=security_group.id), ["- 10.0.0.1/32\n", "- 10.0.1.0/24\n"])
+    assert_list_output(options(sg_name=security_group.group_name), ["- 10.0.0.1/32\n", "- 10.0.1.0/24\n"])
 
 
 def test_list_command_identifies_enclosing_blocks(region, security_group):
@@ -81,28 +86,24 @@ def test_list_command_identifies_enclosing_blocks(region, security_group):
         'ToPort': 22
     }])
     assert_list_output(
-        options(security_group),
+        options(sgid=security_group.id),
+        ["- 192.0.2.1/32 (current)\n", "- 192.0.2.0/24 (current)\n", "- 192.0.1.0/24\n"]
+    )
+    assert_list_output(
+        options(sg_name=security_group.group_name),
         ["- 192.0.2.1/32 (current)\n", "- 192.0.2.0/24 (current)\n", "- 192.0.1.0/24\n"]
     )
 
 
-# TODO: Not currently triggered by moto -- need to research how to trigger again.
-# @mock_ec2
-# def test_list_command_without_region_shows_error():
-#     assert 'AWS_DEFAULT_REGION' not in os.environ
-#     assert 'AWS_REGION' not in os.environ
-#     opt = Namespace()
-#     opt.sgid = 'sg-12345'
-#     assert_list_output(opt, "No AWS region specified")
-
-
-def options(security_group):
+def options(**kwargs):
     opt = Namespace()
-    opt.sgid = security_group.id
+    opt.sgid = kwargs.get('sgid')
+    opt.sg_name = kwargs.get('sg_name')
     opt.ssh_port = 22
     return opt
 
 
+# noinspection PyUnusedLocal
 @patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
 @patch('sys.stdout', new_callable=io.StringIO)
 def assert_list_output(opt, matches, mock_stdout, exip_method):
@@ -115,11 +116,12 @@ def assert_list_output(opt, matches, mock_stdout, exip_method):
             assert match in output
 
 
+# noinspection PyUnusedLocal
 @patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_add_current_adds_permission(mock_stdout, exip_method, region, security_group):
     assert not security_group.ip_permissions
-    opt = options(security_group)
+    opt = options(sgid=security_group.id)
     commands.cmd_add_current(opt)
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
@@ -131,9 +133,9 @@ def test_add_current_adds_permission(mock_stdout, exip_method, region, security_
 
 
 @patch('sys.stdout', new_callable=io.StringIO)
-def test_add_adds_specified_permission(mock_stdout, region, security_group):
+def test_add_adds_specified_permission_sgid(mock_stdout, region, security_group):
     assert not security_group.ip_permissions
-    opt = options(security_group)
+    opt = options(sgid=security_group.id)
     commands.cmd_add(opt, '192.0.2.1/24')
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
@@ -144,10 +146,25 @@ def test_add_adds_specified_permission(mock_stdout, region, security_group):
     assert "Added specified CIDR block" in mock_stdout.getvalue()
 
 
+@patch('sys.stdout', new_callable=io.StringIO)
+def test_add_adds_specified_permission_sgname(mock_stdout, region, security_group):
+    assert not security_group.ip_permissions
+    opt = options(sg_name=security_group.group_name)
+    commands.cmd_add(opt, '192.0.2.1/24')
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert len(after_group.ip_permissions) == 1
+    ranges = after_group.ip_permissions[0]['IpRanges']
+    assert len(ranges) == 1
+    assert ranges[0]['CidrIp'] == '192.0.2.0/24'
+    assert "Added specified CIDR block" in mock_stdout.getvalue()
+
+
+# noinspection PyUnusedLocal
 @patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
 @patch('sys.stdout', new_callable=io.StringIO)
-def test_remove_current_removes_permission(mock_stdout, exip_method, region,
-                                           security_group):
+def test_remove_current_removes_permission_sgid(mock_stdout, exip_method, region,
+                                                security_group):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [
             {'CidrIp': '192.0.2.1/32'},
@@ -156,7 +173,7 @@ def test_remove_current_removes_permission(mock_stdout, exip_method, region,
         'FromPort': 22,
         'ToPort': 22
     }])
-    opt = options(security_group)
+    opt = options(sgid=security_group.id)
     commands.cmd_remove_current(opt)
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
@@ -167,9 +184,42 @@ def test_remove_current_removes_permission(mock_stdout, exip_method, region,
 
 @patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
 @patch('sys.stdout', new_callable=io.StringIO)
-def test_remove_current_indicates_notfound(mock_stdout, exip_method, region,
+def test_remove_current_removes_permission_sgname(mock_stdout, exip_method, region,
+                                                  security_group):
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [
+            {'CidrIp': '192.0.2.1/32'},
+        ],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sg_name=security_group.group_name)
+    commands.cmd_remove_current(opt)
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert not after_group.ip_permissions
+    assert "Removed current external IP address as a CIDR block" \
+           in mock_stdout.getvalue()
+
+
+# noinspection PyUnusedLocal
+@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
+@patch('sys.stdout', new_callable=io.StringIO)
+def test_remove_current_indicates_notfound_sgid(mock_stdout, exip_method, region,
                                            security_group):
-    opt = options(security_group)
+    opt = options(sgid=security_group.id)
+    commands.cmd_remove_current(opt)
+    assert \
+        "Current external IP address as a CIDR block does not seem to be allowlisted." \
+        in mock_stdout.getvalue()
+
+
+@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
+@patch('sys.stdout', new_callable=io.StringIO)
+def test_remove_current_indicates_notfound_sgname(mock_stdout, exip_method, region,
+                                           security_group):
+    opt = options(sg_name=security_group.group_name)
     commands.cmd_remove_current(opt)
     assert \
         "Current external IP address as a CIDR block does not seem to be allowlisted." \
@@ -186,7 +236,7 @@ def test_remove_removes_specified(mock_stdout, region, security_group):
         'FromPort': 22,
         'ToPort': 22
     }])
-    opt = options(security_group)
+    opt = options(sgid=security_group.id)
     commands.cmd_remove(opt, '192.0.2.1/32')
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
@@ -196,7 +246,7 @@ def test_remove_removes_specified(mock_stdout, region, security_group):
 
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_remove_specified_indicates_notfound(mock_stdout, region, security_group):
-    opt = options(security_group)
+    opt = options(sgid=security_group.id)
     commands.cmd_remove(opt, '192.0.2.1/32')
     assert "Specified CIDR block does not seem to be allowlisted." \
            in mock_stdout.getvalue()
