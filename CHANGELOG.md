@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.0] - Unreleaed
+
+### Added
+- `--sg-name` option to let you modify a security group by unique name (including wildcards)
+
 ## [1.0.1] - 2018-05-08
 
 ### Changed

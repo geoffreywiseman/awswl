@@ -66,7 +66,7 @@ AWS AllowList is built in Python using boto, which can use an AWS Credentials fi
 
 Boto's support for environment variables works fine with `aws-vault` and likely other similar tools. If you've tested `awswl` with a different aws authentication approach, let me know and I can list it here.
 
-There's no attempt to capture or record credentials -- the awsal code doesn't actually interact with the credentials at all, that's all done by `boto`, but do feel free to look over the source to assuage any privacy concerns.
+There's no attempt to capture or record credentials -- the awswl code doesn't actually interact with the credentials at all, that's all done by `boto`, but do feel free to look over the source to assuage any privacy concerns.
 
 ### AWS Region
 
@@ -90,7 +90,7 @@ If you want to modify a port other than the default SSH port, you can specify th
 
 In order to get your current ip address, ``--list``, ``--add-current`` and ``--remove-current`` will make a request to ``checkip.amazonaws.org``. Because it's another AWS service, seems less likely to be a privacy concern for anyone.
 
-I may [add a switch](https://github.com/geoffreywiseman/awswl/issues/3) to disable that for the anyone who isn't fond of `awswl` making an additional network request, so if that's a concern for you, feel free to vote for it.
+I may [add a switch](https://github.com/geoffreywiseman/awswl/issues/3) to disable that for anyone who isn't fond of `awswl` making an additional network request, so if that's a concern for you, feel free to vote for it.
 
 ## Help and Version
 

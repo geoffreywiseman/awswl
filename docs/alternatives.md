@@ -8,7 +8,7 @@ AWS has a feature, [Session Manager](https://docs.aws.amazon.com/systems-manager
 
 ## AWS Site-to-Site VPN
 
-If you're working from an office or a set of offices and you have good networking equipment and networking personnel, it's more common to use an [AWS site-to-site VPN](https://docs.aws.amazon.com/vpn/index.html), allowing you to connect the internal network of your office(s) to the internal network of your VPC(s).
+If you're working from an office or a set of offices, and you have good networking equipment and networking personnel, it's more common to use an [AWS site-to-site VPN](https://docs.aws.amazon.com/vpn/index.html), allowing you to connect the internal network of your office(s) to the internal network of your VPC(s).
 
 In a more complex environment, you might also include something like a Transit Gateway.
 
@@ -20,4 +20,4 @@ Some people prefer different VPN solutions and install OpenVPN appliances or a c
 
 This is not an exhaustive list -- there are lots of other choices: Teleport, Direct Connect and probably a bunch of choices I haven't considered.
 
-If you feel strongly about an alternative and you want to add it to the documentation, feel free to raise a PR.
+If you feel strongly about an alternative, and you want to add it to the documentation, feel free to raise a PR.

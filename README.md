@@ -32,7 +32,7 @@ If you want usage help at the command line, try:
 awswl --help
 ```
 
-There's more detailed usage documentation in the documentation, which you can read on [github](docs/usage.md) or [readthedocs](https://awswl.readthedocs.io/en/latest/usage/).
+There's more detailed usage documentation in the documentation, which you can read on [GitHub](docs/usage.md) or [readthedocs](https://awswl.readthedocs.io/en/latest/usage/).
 
 
 ## Environment
