@@ -1,5 +1,8 @@
+import os
 from argparse import Namespace
 from builtins import str
+from datetime import datetime
+from typing import Optional
 
 import boto3
 import botocore
@@ -51,20 +54,41 @@ def cmd_list(options):
 def cmd_add_current(options):
     external_ip = externalip.get_external_ip()
     cidr = "{0}/32".format(external_ip)
-    add_cidr(options, "current external IP address as a CIDR block", cidr)
+    add_cidr(options, "current external IP address as a CIDR block", cidr, get_description(options))
 
 
-def add_cidr(options, description, cidr):
+def get_description(options: Namespace) -> Optional[str]:
+    if 'auto_desc' in options and options.auto_desc:
+        return get_auto_description()
+    elif 'desc' in options and options.desc:
+        return options.desc
+    else:
+        return None
+
+
+def get_auto_description():
+    return f"{os.getlogin()} - {datetime.now().date()}"
+
+
+def add_cidr(options, explain, cidr, description):
     try:
         security_group = get_security_group(options)
         if security_group:
+            ip_range = dict()
+            ip_range['CidrIp'] = cidr
+            if description:
+                ip_range['Description'] = description
             security_group.authorize_ingress(
-                CidrIp=cidr,
-                IpProtocol='tcp',
-                FromPort=options.ssh_port,
-                ToPort=options.ssh_port
+                IpPermissions=[
+                    {
+                        'IpRanges': [ip_range],
+                        'IpProtocol': 'tcp',
+                        'FromPort': options.ssh_port,
+                        'ToPort': options.ssh_port
+                    }
+                ]
             )
-            print("Added {0} ({1}) to allowlist.".format(description, cidr))
+            print("Added {0} ({1}) to allowlist.".format(explain, cidr))
     except ClientError as e:
         if e.response['Error']['Code'] == "InvalidPermission.Duplicate":
             cap_desc = description[0].capitalize() + description[1:]
@@ -106,7 +130,7 @@ def cmd_version(options):
 def cmd_add(options, cidr_block):
     try:
         network = ip_network(str(cidr_block), strict=False)
-        add_cidr(options, "specified CIDR block", network.compressed)
+        add_cidr(options, "specified CIDR block", network.compressed, get_description(options))
     except ValueError as e:
         print("Add error: {0}\n".format(str(e)))
         return
