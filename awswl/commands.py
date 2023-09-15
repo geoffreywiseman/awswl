@@ -61,19 +61,10 @@ def add_cidr(options, description, cidr):
         security_group = get_security_group(options)
         if security_group:
             security_group.authorize_ingress(
-                # FIXME: Workaround for Moto issue: https://github.com/spulec/moto/issues/1522
-                # CidrIp=cidr,
-                # IpProtocol='tcp',
-                # FromPort=options.ssh_port,
-                # ToPort=options.ssh_port
-                IpPermissions=[
-                    {
-                        'IpRanges': [{'CidrIp': cidr}],
-                        'IpProtocol': 'tcp',
-                        'FromPort': options.ssh_port,
-                        'ToPort': options.ssh_port,
-                    }
-                ]
+                CidrIp=cidr,
+                IpProtocol='tcp',
+                FromPort=options.ssh_port,
+                ToPort=options.ssh_port
             )
             print("Added {0} ({1}) to allowlist.".format(description, cidr))
     except ClientError as e:
@@ -96,19 +87,10 @@ def remove_cidr(options, description, cidr):
         security_group = get_security_group(options)
         if security_group:
             security_group.revoke_ingress(
-                # FIXME: Workaround for Moto issue: https://github.com/spulec/moto/issues/1522
-                # CidrIp=cidr,
-                # IpProtocol='tcp',
-                # FromPort=options.ssh_port,
-                # ToPort=options.ssh_port
-                IpPermissions=[
-                    {
-                        'IpRanges': [{'CidrIp': cidr}],
-                        'IpProtocol': 'tcp',
-                        'FromPort': options.ssh_port,
-                        'ToPort': options.ssh_port,
-                    }
-                ]
+                CidrIp=cidr,
+                IpProtocol='tcp',
+                FromPort=options.ssh_port,
+                ToPort=options.ssh_port
             )
             print("Removed {0} ({1}) from allowlist.".format(description, cidr))
     except ClientError as e:
