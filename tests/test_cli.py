@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 from awswl import cli
@@ -49,3 +50,25 @@ def test_override_sgname_env(sgname):
     options = cli.parse_args(['--sg-name', override])
     assert options.sg_name == override
     assert options.sg_name != sgname
+
+
+def test_default_desc():
+    options = cli.parse_args(['--version'])
+    assert options.desc is None
+    assert not options.auto_desc
+
+
+def test_parse_desc():
+    description = 'Bastion Host'
+    options = cli.parse_args(['--desc', description])
+    assert options.desc == description
+
+
+def test_parse_autodesc():
+    options = cli.parse_args(['--auto-desc'])
+    assert options.auto_desc
+
+
+def test_parse_conflict():
+    with pytest.raises(SystemExit):
+        cli.parse_args(['--auto-desc', '--desc', 'conflict'])

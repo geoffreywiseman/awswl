@@ -49,4 +49,14 @@ def parse_args(args):
         help="Removes a manually-specified CIDR block from the allowlist."
     )
 
+    # Descriptions
+    desc_group = parser.add_mutually_exclusive_group()
+    desc_group.add_argument(
+        "--desc", help="Specify a description to use for all added CIDRs."
+    )
+    desc_group.add_argument(
+        "--auto-desc", action="store_true",
+        help="Automatically generate a description for all added CIDRs."
+    )
+
     return parser.parse_args(args)
