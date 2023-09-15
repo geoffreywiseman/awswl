@@ -1,7 +1,7 @@
 import boto3
-import pytest
 
 from moto import mock_ec2
+
 
 # Tests of Moto
 # One of these was failing, passes now.
@@ -9,7 +9,7 @@ from moto import mock_ec2
 @mock_ec2
 def test_security_group_ingress_succeeds():
     ec2 = boto3.resource('ec2', 'ca-central-1')
-    sg = ec2.create_security_group(Description='Test SG',GroupName='test-sg')
+    sg = ec2.create_security_group(Description='Test SG', GroupName='test-sg')
 
     assert len(sg.ip_permissions) == 0
     sg.authorize_ingress(IpPermissions=[
