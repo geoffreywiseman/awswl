@@ -11,20 +11,22 @@ Often, I'll want to check if my current ip address is in a security group:
 ```shell
 ❯ awswl --sgid sg-0123456abc --list
 The following CIDR blocks are authorized for SSH:
-- 192.168.0.0/16
+- 192.168.0.0/16                    (Bastion Host)
 - 172.16.0.0/21
-- 8.8.8.8/32
+- 8.8.8.8/32                        (Quad 8)
 ```
 
-These IP addresses are made up, but if my current external ip address were listed, it should be marked with `(current)`.  This is what it would look like if I were in the list:
+Any descriptions that have been added to AWS metadata will appear as well.
+
+These IP addresses are made up, but if my current external ip address were listed (or if my current external ip address is included in a larger block in this list), it should be marked with `(current)`.  This is what it would look like if I were in the list:
 
 ```shell
 ❯ awswl --sg-name "mycorp-prod-bastion" --list
 The following CIDR blocks are authorized for SSH:
-- 192.168.0.0/16
+- 192.168.0.0/16                    (Bastion Host)
 - 172.16.0.0/21
-- 8.8.8.8/32
-- 1.2.3.4/32 (current)
+- 8.8.8.8/32                        (Quad 8)
+- 1.2.3.4/32                        (current)
 ```
 
 ### Adding My Current External IP

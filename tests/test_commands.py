@@ -70,8 +70,35 @@ def test_list_command_lists_ipv4_blocks(region, security_group):
         'FromPort': 22,
         'ToPort': 22
     }])
-    assert_list_output(options(sgid=security_group.id), ["- 10.0.0.1/32\n", "- 10.0.1.0/24\n"])
-    assert_list_output(options(sg_name=security_group.group_name), ["- 10.0.0.1/32\n", "- 10.0.1.0/24\n"])
+    assert_list_output(options(sgid=security_group.id), ["- 10.0.0.1/32", "- 10.0.1.0/24"])
+    assert_list_output(options(sg_name=security_group.group_name), ["- 10.0.0.1/32", "- 10.0.1.0/24"])
+
+
+def test_list_command_lists_descriptions(region, security_group):
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [
+            {'CidrIp': '10.0.0.1/32', 'Description': 'Double Trouble'},
+            {'CidrIp': '10.0.1.0/24'},
+            {'CidrIp': '192.168.0.0/16', 'Description': 'Sweet Sixteen'}
+        ],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    assert_list_output(
+        options(sgid=security_group.id), [
+            "- 10.0.0.1/32                        (Double Trouble)\n"
+            "- 10.0.1.0/24                        \n"
+            "- 192.168.0.0/16                     (Sweet Sixteen)\n"
+        ]
+    )
+    assert_list_output(
+        options(sg_name=security_group.group_name), [
+            "- 10.0.0.1/32                        (Double Trouble)\n"
+            "- 10.0.1.0/24                        \n"
+            "- 192.168.0.0/16                     (Sweet Sixteen)\n"
+        ]
+    )
 
 
 def test_list_command_identifies_enclosing_blocks(region, security_group):
@@ -86,12 +113,19 @@ def test_list_command_identifies_enclosing_blocks(region, security_group):
         'ToPort': 22
     }])
     assert_list_output(
-        options(sgid=security_group.id),
-        ["- 192.0.2.1/32 (current)\n", "- 192.0.2.0/24 (current)\n", "- 192.0.1.0/24\n"]
+        options(sgid=security_group.id), [
+            "- 192.0.2.1/32                       (current)\n",
+            "- 192.0.2.0/24                       (current)\n",
+            "- 192.0.1.0/24                       \n"
+        ]
     )
     assert_list_output(
         options(sg_name=security_group.group_name),
-        ["- 192.0.2.1/32 (current)\n", "- 192.0.2.0/24 (current)\n", "- 192.0.1.0/24\n"]
+        [
+            "- 192.0.2.1/32                       (current)\n",
+            "- 192.0.2.0/24                       (current)\n",
+            "- 192.0.1.0/24                       \n"
+        ]
     )
 
 
@@ -110,10 +144,10 @@ def assert_list_output(opt, matches, mock_stdout, exip_method):
     commands.cmd_list(opt)
     output = mock_stdout.getvalue()
     if isinstance(matches, str):
-        assert matches in output
+        assert matches in output, f"Cannot find '{matches}' in output: {output}"
     if isinstance(matches, list):
         for match in matches:
-            assert match in output
+            assert match in output, f"Cannot find '{match}' in output: {output}"
 
 
 # noinspection PyUnusedLocal
@@ -207,7 +241,7 @@ def test_remove_current_removes_permission_sgname(mock_stdout, exip_method, regi
 @patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_remove_current_indicates_notfound_sgid(mock_stdout, exip_method, region,
-                                           security_group):
+                                                security_group):
     opt = options(sgid=security_group.id)
     commands.cmd_remove_current(opt)
     assert \
@@ -218,7 +252,7 @@ def test_remove_current_indicates_notfound_sgid(mock_stdout, exip_method, region
 @patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_remove_current_indicates_notfound_sgname(mock_stdout, exip_method, region,
-                                           security_group):
+                                                  security_group):
     opt = options(sg_name=security_group.group_name)
     commands.cmd_remove_current(opt)
     assert \

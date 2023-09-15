@@ -24,23 +24,21 @@ def cmd_list(options):
                permission['ToPort'] <= options.ssh_port <= permission['FromPort']
         ]
         authorized_blocks = [
-            ip_network(str(ip_range['CidrIp']))
+            [ip_network(str(ip_range['CidrIp'])), ip_range.get('Description')]
             for permission in ssh_permissions
             for ip_range in permission['IpRanges']
         ]
         authorized_blocks += [
-            ip_network(str(ip_range['CidrIpv6']))
+            [ip_network(str(ip_range['CidrIpv6'])), ip_range.get('Description')]
             for permission in ssh_permissions
             if 'Ipv6Ranges' in permission
             for ip_range in permission['Ipv6Ranges']
         ]
         if authorized_blocks:
             print("The following CIDR blocks are authorized for SSH:")
-            for block in authorized_blocks:
-                if external_ip in block:
-                    print("- {0} (current)".format(block))
-                else:
-                    print("- {0}".format(block))
+            for block, desc in authorized_blocks:
+                current = external_ip in block
+                print(f"- {str(block):35}{'(current)' if current else ''}{'(' + desc + ')' if desc else ''}")
         else:
             print("No CIDR blocks authorized for SSH.")
         print("")
