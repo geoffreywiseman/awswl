@@ -30,14 +30,14 @@ awswl = "awswl.main:main"
 [tool.poetry.dependencies]
 python = "^3.9"
 ipaddress = "^1.0.23"
-boto3 = "^1.26.102"
+boto3 = "^1.28.49"
 requests = "^2.31.0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.2.2"
-moto = "^4.1.6"
-mock = "^5.0.1"
-ruff = "^0.0.270"
+pytest = "^7.4.2"
+moto = "^4.2.2"
+mock = "^5.1.0"
+ruff = "^0.0.289"
 
 [build-system]
 requires = ["poetry-core"]
