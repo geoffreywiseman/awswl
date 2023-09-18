@@ -2,12 +2,10 @@ import os
 from argparse import Namespace
 from builtins import str
 from datetime import date
+from ipaddress import ip_network, ip_address
 from typing import Optional
 
 import boto3
-import botocore
-
-from ipaddress import ip_network, ip_address
 from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError
 
 from . import externalip
