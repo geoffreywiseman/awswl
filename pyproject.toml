@@ -11,17 +11,15 @@ repository = "https://github.com/geoffreywiseman/awswl"
 homepage = "https://github.com/geoffreywiseman/awswl"
 keywords = ["aws", "vpn", "securitygroups", "security", "networking", "allowlist", "ssh", "firewall", "utility"]
 classifiers = [
-    "Classifier: Development Status :: 5 - Production/Stable",
-    "Classifier: Intended Audience :: Developers",
-    "Classifier: Topic :: System :: Networking",
-    "Classifier: Topic :: System :: Networking :: Firewalls",
-    "Classifier: License :: Public Domain",
-    "Classifier: Programming Language :: Python :: 2",
-    "Classifier: Programming Language :: Python :: 2.7",
-    "Classifier: Programming Language :: Python :: 3",
-    "Classifier: Programming Language :: Python :: 3.4",
-    "Classifier: Programming Language :: Python :: 3.5",
-    "Classifier: Programming Language :: Python :: 3.6"
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: System :: Networking",
+    "Topic :: System :: Networking :: Firewalls",
+    "License :: Public Domain",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11"
 ]
 
 [tool.poetry.scripts]
