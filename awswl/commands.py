@@ -8,7 +8,7 @@ import boto3
 import botocore
 
 from ipaddress import ip_network, ip_address
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError
 
 from . import externalip
 
@@ -45,8 +45,10 @@ def cmd_list(options):
         else:
             print("No CIDR blocks authorized for SSH.")
         print("")
-    except botocore.exceptions.NoRegionError:
+    except NoRegionError:
         print("No AWS region specified (AWS configuration/environment variables).")
+    except NoCredentialsError as e:
+        print(f"Credentials Error: {e}")
     except ClientError as e:
         print(e)
 
@@ -99,6 +101,8 @@ def add_cidr(options, explain, cidr, description):
         else:
             print("Unexpected error")
             print(e)
+    except NoCredentialsError as e:
+        print(f"Credentials Error: {e}")
 
 
 def cmd_remove_current(options):
@@ -124,6 +128,8 @@ def remove_cidr(options, description, cidr):
             print("{0} does not seem to be allowlisted.".format(cap_desc))
         else:
             print(e)
+    except NoCredentialsError as e:
+        print(f"Credentials Error: {e}")
 
 
 def cmd_version(options):
