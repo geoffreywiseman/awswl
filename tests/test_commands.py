@@ -1,4 +1,6 @@
 import io
+from datetime import date
+
 import boto3
 import pytest
 
@@ -134,6 +136,8 @@ def options(**kwargs):
     opt.sgid = kwargs.get('sgid')
     opt.sg_name = kwargs.get('sg_name')
     opt.ssh_port = 22
+    opt.auto_desc = kwargs.get('auto_desc')
+    opt.desc = kwargs.get('desc')
     return opt
 
 
@@ -284,3 +288,30 @@ def test_remove_specified_indicates_notfound(mock_stdout, region, security_group
     commands.cmd_remove(opt, '192.0.2.1/32')
     assert "Specified CIDR block does not seem to be allowlisted." \
            in mock_stdout.getvalue()
+
+
+def test_add_autodesc(security_group):
+    x_acquired = date.fromisoformat("2022-10-27")
+    opt = options(sgid=security_group.id, auto_desc=True)
+    with patch.object(os, 'getlogin', return_value='emusk'), patch('awswl.commands.date') as mock_date:
+        mock_date.today.return_value = x_acquired
+        commands.cmd_add(opt, '1.2.3.4/32')
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert len(after_group.ip_permissions) == 1
+    ranges = after_group.ip_permissions[0]['IpRanges']
+    assert len(ranges) == 1
+    assert ranges[0]['Description'] == 'emusk - 2022-10-27'
+
+def test_add_desc(security_group):
+    cwbd = date.fromisoformat("2008-03-01")
+    opt = options(sg_name=security_group.group_name, auto_desc=True)
+    with patch.object(os, 'getlogin', return_value='thestuff'), patch('awswl.commands.date') as mock_date:
+        mock_date.today.return_value = cwbd
+        commands.cmd_add(opt, '3.2.1.0/30')
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert len(after_group.ip_permissions) == 1
+    ranges = after_group.ip_permissions[0]['IpRanges']
+    assert len(ranges) == 1
+    assert ranges[0]['Description'] == 'thestuff - 2008-03-01'

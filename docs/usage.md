@@ -35,8 +35,21 @@ If I want to give myself access to a security group, I could `--add-current`:
 
 ```shell
 ❯ awswl --sgid sg-0123456abc --add-current
-Added current external IP address as a CIDR block (1.2.3.4/32) to allowlist.
+Added current external IP address as a CIDR block (1.2.3.4/32) to allowlist w/o description.
 ```
+
+If I want to make sure that my addition gets a description, I can add an automatic description:
+```shell
+❯ awswl --sgid sg-0123456abc --add-current --auto-desc
+Added current external IP address as a CIDR block (1.2.3.4/32) to allowlist w/ description 'geoffrey - 2023-09-01'.
+```
+
+Or one that I specify myself:
+```shell
+❯ awswl --sgid sg-0123456abc --add-current --desc 'Bastion Host'
+Added current external IP address as a CIDR block (1.2.3.4/32) to allowlist w/ description 'Bastion Host'.
+```
+
 
 ### Removing My Current External IP
  
@@ -57,6 +70,8 @@ Added specified CIDR block (8.8.8.0/28) to allowlist.
 ❯ awswl --sg-name "*beta-extern*" --remove 8.8.8.8/28
 Removed specified CIDR block (8.8.8.0/28) from allowlist.
 ```
+
+You can use `--auto-desc` or `--desc` to add descriptions here as well.  
 
 ## Required Metadata
 There's a bunch of required metadata to do this properly.

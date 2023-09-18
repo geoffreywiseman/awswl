@@ -1,7 +1,7 @@
 import os
 from argparse import Namespace
 from builtins import str
-from datetime import datetime
+from datetime import date
 from typing import Optional
 
 import boto3
@@ -67,7 +67,7 @@ def get_description(options: Namespace) -> Optional[str]:
 
 
 def get_auto_description():
-    return f"{os.getlogin()} - {datetime.now().date()}"
+    return f"{os.getlogin()} - {date.today()}"
 
 
 def add_cidr(options, explain, cidr, description):
@@ -88,11 +88,14 @@ def add_cidr(options, explain, cidr, description):
                     }
                 ]
             )
-            print("Added {0} ({1}) to allowlist.".format(explain, cidr))
+            if description:
+                print(f"Added {explain} ({cidr}) to allowlist w/ description '{description}'")
+            else:
+                print(f"Added {explain} ({cidr}) to allowlist w/o description.")
     except ClientError as e:
         if e.response['Error']['Code'] == "InvalidPermission.Duplicate":
             cap_desc = description[0].capitalize() + description[1:]
-            print("{0} is already allowlisted.".format(cap_desc))
+            print(f"{cap_desc} is already allowlisted.")
         else:
             print("Unexpected error")
             print(e)
