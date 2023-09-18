@@ -290,7 +290,7 @@ def test_remove_specified_indicates_notfound(mock_stdout, region, security_group
            in mock_stdout.getvalue()
 
 
-def test_add_autodesc(security_group):
+def test_add_autodesc(region, security_group):
     x_acquired = date.fromisoformat("2022-10-27")
     opt = options(sgid=security_group.id, auto_desc=True)
     with patch.object(os, 'getlogin', return_value='emusk'), patch('awswl.commands.date') as mock_date:
@@ -303,7 +303,7 @@ def test_add_autodesc(security_group):
     assert len(ranges) == 1
     assert ranges[0]['Description'] == 'emusk - 2022-10-27'
 
-def test_add_desc(security_group):
+def test_add_desc(region, security_group):
     cwbd = date.fromisoformat("2008-03-01")
     opt = options(sg_name=security_group.group_name, auto_desc=True)
     with patch.object(os, 'getlogin', return_value='thestuff'), patch('awswl.commands.date') as mock_date:
