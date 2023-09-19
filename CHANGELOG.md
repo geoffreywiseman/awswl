@@ -1,9 +1,21 @@
 # Changelog
 
-## [1.1.0] - Unreleaed
+## [1.1.0] - Unreleased
 
 ### Added
-- `--sg-name` option to let you modify a security group by unique name (including wildcards)
+- Search for Security Group by Name
+  - `--sg-name` option to let you modify a security group by unique name (including wildcards)
+- Descriptions
+  - Show descriptions in `--list`
+  - `--auto-desc` to generate a description from username and date while adding
+  - `--desc` to specify a description while adding
+
+### Internals
+- Converted to Poetry Project
+- Dependency Upgrades
+- GitHub Actions for CI / Publish
+- Using Ruff for linting
+- ReadTheDocs
 
 ## [1.0.1] - 2018-05-08
 
