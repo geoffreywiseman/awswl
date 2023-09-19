@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "awswl"
-version = "1.1.0b0"
+version = "1.1.0"
 description = "A project to make it simple to add/remove ip addresses (or CIDR blocks) from an AWS Security group."
 authors = [
     "Geoffrey Wiseman <geoffrey.wiseman@codiform.com>"
@@ -11,7 +11,7 @@ repository = "https://github.com/geoffreywiseman/awswl"
 homepage = "https://github.com/geoffreywiseman/awswl"
 keywords = ["aws", "vpn", "securitygroups", "security", "networking", "allowlist", "ssh", "firewall", "utility"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: System :: Networking",
     "Topic :: System :: Networking :: Firewalls",
