@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.1.0] - Unreleased
+## [1.1.0] - 2023-09-19
 
 ### Added
 - Search for Security Group by Name
