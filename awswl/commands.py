@@ -10,6 +10,8 @@ from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError
 
 from . import externalip
 
+import awswl
+
 
 def cmd_list(options):
     external_ip = ip_address(str(externalip.get_external_ip()))
@@ -51,12 +53,6 @@ def cmd_list(options):
         print(e)
 
 
-def cmd_add_current(options):
-    external_ip = externalip.get_external_ip()
-    cidr = "{0}/32".format(external_ip)
-    add_cidr(options, "current external IP address as a CIDR block", cidr, get_description(options))
-
-
 def get_description(options: Namespace) -> Optional[str]:
     if 'auto_desc' in options and options.auto_desc:
         return get_auto_description()
@@ -68,6 +64,22 @@ def get_description(options: Namespace) -> Optional[str]:
 
 def get_auto_description():
     return f"{os.getlogin()} - {date.today()}"
+
+
+def cmd_add(options: Namespace):
+    try:
+        for cidr in options.cidrs:
+            network = ip_network(str(cidr), strict=False)
+            add_cidr(options, "specified CIDR block", network.compressed, get_description(options))
+    except ValueError as e:
+        print("Add error: {0}\n".format(str(e)))
+        return
+
+
+def cmd_add_current(options):
+    external_ip = externalip.get_external_ip()
+    cidr = "{0}/32".format(external_ip)
+    add_cidr(options, "current external IP address as a CIDR block", cidr, get_description(options))
 
 
 def add_cidr(options, explain, cidr, description):
@@ -103,27 +115,39 @@ def add_cidr(options, explain, cidr, description):
         print(f"Credentials Error: {e}")
 
 
-def cmd_remove_current(options):
-    external_ip = externalip.get_external_ip()
-    cidr = "{0}/32".format(external_ip)
-    remove_cidr(options, "current external IP address as a CIDR block", cidr)
-
-
-def remove_cidr(options, description, cidr):
+def cmd_remove(options: Namespace):
     try:
         security_group = get_security_group(options)
         if security_group:
-            security_group.revoke_ingress(
-                CidrIp=cidr,
-                IpProtocol='tcp',
-                FromPort=options.ssh_port,
-                ToPort=options.ssh_port
-            )
-            print("Removed {0} ({1}) from allowlist.".format(description, cidr))
+            for cidr in options.cidrs:
+                network = ip_network(str(cidr), strict=False)
+                remove_cidr(options, security_group, str(cidr), network.compressed)
+    except ValueError as e:
+        print(f"Remove error: {str(e)}\n")
+        return
+
+
+def cmd_remove_current(options):
+    security_group = get_security_group(options)
+    if security_group:
+        external_ip = externalip.get_external_ip()
+        cidr = f"{external_ip}/32"
+        remove_cidr(options, security_group, f"current external IP address ({cidr})", cidr)
+
+
+def remove_cidr(options: Namespace, security_group, desc: str, cidr: str):
+    try:
+        security_group.revoke_ingress(
+            CidrIp=cidr,
+            IpProtocol='tcp',
+            FromPort=options.ssh_port,
+            ToPort=options.ssh_port
+        )
+        print(f"Removed {desc} from allowlist.")
     except ClientError as e:
         if e.response['Error']['Code'] == "InvalidPermission.NotFound":
-            cap_desc = description[0].capitalize() + description[1:]
-            print("{0} does not seem to be allowlisted.".format(cap_desc))
+            cap_desc = desc[0].capitalize() + desc[1:]
+            print(f"{cap_desc} does not seem to be allowlisted.")
         else:
             print(e)
     except NoCredentialsError as e:
@@ -131,25 +155,7 @@ def remove_cidr(options, description, cidr):
 
 
 def cmd_version(options):
-    print("awswl v{0}".format(options.version))
-
-
-def cmd_add(options, cidr_block):
-    try:
-        network = ip_network(str(cidr_block), strict=False)
-        add_cidr(options, "specified CIDR block", network.compressed, get_description(options))
-    except ValueError as e:
-        print("Add error: {0}\n".format(str(e)))
-        return
-
-
-def cmd_remove(options, cidr_block):
-    try:
-        network = ip_network(str(cidr_block), strict=False)
-        remove_cidr(options, "specified CIDR block", network.compressed)
-    except ValueError as e:
-        print("Remove error: {0}\n".format(str(e)))
-        return
+    print(f"awswl v{awswl.version}")
 
 
 def get_security_group(options: Namespace):

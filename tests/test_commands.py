@@ -6,6 +6,7 @@ import pytest
 
 from moto import mock_ec2
 from argparse import Namespace
+import awswl
 from awswl import commands
 import os
 
@@ -44,13 +45,12 @@ def security_group_fixture():
 def test_version_command(mock_stdout):
     # Given
     opt = Namespace()
-    opt.version = "1.2.3"
 
     # When
     commands.cmd_version(opt)
 
     # Then
-    assert mock_stdout.getvalue() == "awswl v1.2.3\n"
+    assert mock_stdout.getvalue() == f"awswl v{awswl.version}\n"
 
 
 # noinspection PyUnusedLocal
@@ -138,6 +138,7 @@ def options(**kwargs):
     opt.ssh_port = 22
     opt.auto_desc = kwargs.get('auto_desc')
     opt.desc = kwargs.get('desc')
+    opt.cidrs = kwargs.get('cidrs', [])
     return opt
 
 
@@ -173,8 +174,8 @@ def test_add_current_adds_permission(mock_stdout, exip_method, region, security_
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_add_adds_specified_permission_sgid(mock_stdout, region, security_group):
     assert not security_group.ip_permissions
-    opt = options(sgid=security_group.id)
-    commands.cmd_add(opt, '192.0.2.1/24')
+    opt = options(sgid=security_group.id, cidrs=['192.0.2.1/24'])
+    commands.cmd_add(opt)
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     assert len(after_group.ip_permissions) == 1
@@ -187,8 +188,8 @@ def test_add_adds_specified_permission_sgid(mock_stdout, region, security_group)
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_add_adds_specified_permission_sgname(mock_stdout, region, security_group):
     assert not security_group.ip_permissions
-    opt = options(sg_name=security_group.group_name)
-    commands.cmd_add(opt, '192.0.2.1/24')
+    opt = options(sg_name=security_group.group_name, cidrs=['192.0.2.1/24'])
+    commands.cmd_add(opt)
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     assert len(after_group.ip_permissions) == 1
@@ -199,13 +200,13 @@ def test_add_adds_specified_permission_sgname(mock_stdout, region, security_grou
 
 
 # noinspection PyUnusedLocal
-@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
+@patch('awswl.externalip.get_external_ip', return_value='192.0.2.4')
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_remove_current_removes_permission_sgid(mock_stdout, exip_method, region,
                                                 security_group):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [
-            {'CidrIp': '192.0.2.1/32'},
+            {'CidrIp': '192.0.2.4/32'},
         ],
         'IpProtocol': 'tcp',
         'FromPort': 22,
@@ -216,17 +217,17 @@ def test_remove_current_removes_permission_sgid(mock_stdout, exip_method, region
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     assert not after_group.ip_permissions
-    assert "Removed current external IP address as a CIDR block" \
+    assert "Removed current external IP address (192.0.2.4/32)" \
            in mock_stdout.getvalue()
 
 
-@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
+@patch('awswl.externalip.get_external_ip', return_value='192.0.2.8')
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_remove_current_removes_permission_sgname(mock_stdout, exip_method, region,
                                                   security_group):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [
-            {'CidrIp': '192.0.2.1/32'},
+            {'CidrIp': '192.0.2.8/32'},
         ],
         'IpProtocol': 'tcp',
         'FromPort': 22,
@@ -237,7 +238,7 @@ def test_remove_current_removes_permission_sgname(mock_stdout, exip_method, regi
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     assert not after_group.ip_permissions
-    assert "Removed current external IP address as a CIDR block" \
+    assert "Removed current external IP address (192.0.2.8/32)" \
            in mock_stdout.getvalue()
 
 
@@ -249,7 +250,7 @@ def test_remove_current_indicates_notfound_sgid(mock_stdout, exip_method, region
     opt = options(sgid=security_group.id)
     commands.cmd_remove_current(opt)
     assert \
-        "Current external IP address as a CIDR block does not seem to be allowlisted." \
+        "Current external IP address (192.0.2.1/32) does not seem to be allowlisted." \
         in mock_stdout.getvalue()
 
 
@@ -260,7 +261,7 @@ def test_remove_current_indicates_notfound_sgname(mock_stdout, exip_method, regi
     opt = options(sg_name=security_group.group_name)
     commands.cmd_remove_current(opt)
     assert \
-        "Current external IP address as a CIDR block does not seem to be allowlisted." \
+        "Current external IP address (192.0.2.1/32) does not seem to be allowlisted." \
         in mock_stdout.getvalue()
 
 
@@ -274,28 +275,28 @@ def test_remove_removes_specified(mock_stdout, region, security_group):
         'FromPort': 22,
         'ToPort': 22
     }])
-    opt = options(sgid=security_group.id)
-    commands.cmd_remove(opt, '192.0.2.1/32')
+    opt = options(sgid=security_group.id,cidrs=['192.0.2.1/32'])
+    commands.cmd_remove(opt)
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     assert not after_group.ip_permissions
-    assert "Removed specified CIDR block" in mock_stdout.getvalue()
+    assert "Removed 192.0.2.1/32 from allowlist" in mock_stdout.getvalue()
 
 
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_remove_specified_indicates_notfound(mock_stdout, region, security_group):
-    opt = options(sgid=security_group.id)
-    commands.cmd_remove(opt, '192.0.2.1/32')
-    assert "Specified CIDR block does not seem to be allowlisted." \
+    opt = options(sgid=security_group.id, cidrs=['192.0.2.1/32'])
+    commands.cmd_remove(opt)
+    assert "192.0.2.1/32 does not seem to be allowlisted." \
            in mock_stdout.getvalue()
 
 
 def test_add_autodesc(region, security_group):
     x_acquired = date.fromisoformat("2022-10-27")
-    opt = options(sgid=security_group.id, auto_desc=True)
+    opt = options(sgid=security_group.id, auto_desc=True, cidrs=['1.2.3.4/32'])
     with patch.object(os, 'getlogin', return_value='emusk'), patch('awswl.commands.date') as mock_date:
         mock_date.today.return_value = x_acquired
-        commands.cmd_add(opt, '1.2.3.4/32')
+        commands.cmd_add(opt)
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     assert len(after_group.ip_permissions) == 1
@@ -305,10 +306,10 @@ def test_add_autodesc(region, security_group):
 
 def test_add_desc(region, security_group):
     cwbd = date.fromisoformat("2008-03-01")
-    opt = options(sg_name=security_group.group_name, auto_desc=True)
+    opt = options(sg_name=security_group.group_name, auto_desc=True, cidrs=['3.2.1.0/30'])
     with patch.object(os, 'getlogin', return_value='thestuff'), patch('awswl.commands.date') as mock_date:
         mock_date.today.return_value = cwbd
-        commands.cmd_add(opt, '3.2.1.0/30')
+        commands.cmd_add(opt)
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     assert len(after_group.ip_permissions) == 1
