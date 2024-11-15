@@ -34,19 +34,19 @@ The following CIDR blocks are authorized for SSH:
 If I want to give myself access to a security group, I could `--add-current`:
 
 ```shell
-❯ awswl --sgid sg-0123456abc --add-current
+❯ awswl --sgid sg-0123456abc add-current
 Added current external IP address as a CIDR block (1.2.3.4/32) to allowlist w/o description.
 ```
 
 If I want to make sure that my addition gets a description, I can add an automatic description:
 ```shell
-❯ awswl --sgid sg-0123456abc --add-current --auto-desc
+❯ awswl --sgid sg-0123456abc add-current --auto-desc
 Added current external IP address as a CIDR block (1.2.3.4/32) to allowlist w/ description 'geoffrey - 2023-09-01'.
 ```
 
 Or one that I specify myself:
 ```shell
-❯ awswl --sgid sg-0123456abc --add-current --desc 'Bastion Host'
+❯ awswl --sgid sg-0123456abc add-current --desc 'Bastion Host'
 Added current external IP address as a CIDR block (1.2.3.4/32) to allowlist w/ description 'Bastion Host'.
 ```
 
@@ -56,22 +56,24 @@ Added current external IP address as a CIDR block (1.2.3.4/32) to allowlist w/ d
 If I'm working in an environment temporarily, I might want to revoke access as soon as I'm done, using `--remove-current`
 
 ```shell
-❯ awswl --sg-name "myorg-jump-host" --remove-current
+❯ awswl --sg-name "myorg-jump-host" remove-current
 Removed current external IP address as a CIDR block (4.3.2.1/32) from allowlist.
 ```
+
 ### Adding or Removing a Custom CIDR
 
 Although I usually want my current external ip address, there are certainly cases where you might want to allow-list a custom CIDR block:
 
 ```shell
-❯ awswl --sgid sg-0123456abc --add 8.8.8.8/28
-Added specified CIDR block (8.8.8.0/28) to allowlist.
+❯ awswl --sgid sg-0123456abc add 8.8.8.8/28
+Added specified CIDR block (8.8.8.0/28) to allowlist w/o description.
 
 ❯ awswl --sg-name "*beta-extern*" --remove 8.8.8.8/28
-Removed specified CIDR block (8.8.8.0/28) from allowlist.
+Removed 8.8.8.0/28 from allowlist.
 ```
 
-You can use `--auto-desc` or `--desc` to add descriptions here as well.  
+You can use `--auto-desc` or `--desc` when adding custom CIDRs as well if you want to make sure the security group rules have descriptions.  
+
 
 ## Required Metadata
 There's a bunch of required metadata to do this properly.

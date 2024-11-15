@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.2.0] - Unreleased
+
+### Changed
+
+- Refactored the CLI options
+  - The *commands* have been changed from options (e.g. `awswl --list`) to positional arguments (e.g. `awswl list`)
+  - This also means that each invocation can only have a single command.
+  - Effectively this makes it easier to avoid weird interactions between multiple commands and their options.
+
+### Internals
+
+- Dependency Updates
+  - Several security vulnerabilities were reported in dependencies
+  - Avoiding those vulnerabilities by updating to newer versions
+
 ## [1.1.0] - 2023-09-19
 
 ### Added
