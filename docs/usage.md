@@ -74,7 +74,7 @@ Removed 8.8.8.0/28 from allowlist.
 
 You can use `--auto-desc` or `--desc` when adding custom CIDRs as well if you want to make sure the security group rules have descriptions.  
 
-## Updating an Existing CIDR
+### Updating an Existing CIDR
 
 If I've already added a CIDR with a description, I can update it to a new value. This is typically useful if your IP address changes from time to time (often true for home connections) or if you work from more than one location but you want to make sure that only the location you're currently working from is on the allowlist.
 
@@ -84,7 +84,8 @@ I can do this by specifying the CIDR:
 Using security group codiform-bastion (sg-00abcdef9234).
 
 Removed old value (7.7.7.7/32) from allowlist.
-Added new value (8.8.8.8/32) to allowlist w/ description 'Geoffrey Home'```
+Added new value (8.8.8.8/32) to allowlist w/ description 'Geoffrey Home'
+```
 
 Or using my current IP Address:
 ```shell
