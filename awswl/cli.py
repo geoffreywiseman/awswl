@@ -52,4 +52,11 @@ def parse_args(args):
             help="Automatically generate a description to use for all added CIDRs."
         )
 
+    ## Update
+    update_parser = subparser.add_parser('update', help="Updates the CIDR associated with a specified description in the allowlist.")
+    update_parser.add_argument('--desc', help="The description already in the allowlist associated with the rule you want to update.", required=True)
+    update_parser.add_argument( 'cidr', help="The new CIDR block to associate with the specified description." )
+    update_parser = subparser.add_parser('update-current', help="Updates the CIDR associated with a specified description to the current IP address.")
+    update_parser.add_argument('--desc', help="The description already in the allowlist associated with the rule you want to update.", required=True)
+
     return parser.parse_args(args)

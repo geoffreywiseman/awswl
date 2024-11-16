@@ -68,23 +68,26 @@ def get_auto_description():
 
 def cmd_add(options: Namespace):
     try:
-        for cidr in options.cidrs:
-            network = ip_network(str(cidr), strict=False)
-            add_cidr(options, "specified CIDR block", network.compressed, get_description(options))
+        security_group = get_security_group(options)
+        if security_group:
+            for cidr in options.cidrs:
+                network = ip_network(str(cidr), strict=False)
+                add_cidr(options, security_group, "specified CIDR block", network.compressed, get_description(options))
     except ValueError as e:
         print("Add error: {0}\n".format(str(e)))
         return
 
 
 def cmd_add_current(options):
-    external_ip = externalip.get_external_ip()
-    cidr = "{0}/32".format(external_ip)
-    add_cidr(options, "current external IP address as a CIDR block", cidr, get_description(options))
+    security_group = get_security_group(options)
+    if security_group:
+        external_ip = externalip.get_external_ip()
+        cidr = "{0}/32".format(external_ip)
+        add_cidr(options, security_group, "current external IP address as a CIDR block", cidr, get_description(options))
 
 
-def add_cidr(options, explain, cidr, description):
+def add_cidr(options, security_group, explain, cidr, description):
     try:
-        security_group = get_security_group(options)
         if security_group:
             ip_range = dict()
             ip_range['CidrIp'] = cidr
@@ -185,3 +188,50 @@ def get_matching_security_groups(sg_name):
         for group in page['SecurityGroups']:
             groups.append([group['GroupName'], group['GroupId']])
     return groups
+
+
+def cmd_update(options: Namespace):
+    try:
+        security_group = get_security_group(options)
+        if security_group:
+            cidr = options.cidr
+            network = ip_network(str(cidr), strict=False)
+            update_cidr(options, security_group, network.compressed, get_description(options))
+    except ValueError as e:
+        print(f"Update error: {str(e)}\n")
+        return
+
+
+def cmd_update_current(options: Namespace):
+    security_group = get_security_group(options)
+    if security_group:
+        external_ip = externalip.get_external_ip()
+        cidr = f"{external_ip}/32"
+        update_cidr(options, security_group, cidr, get_description(options))
+
+
+def update_cidr(options: Namespace, security_group, new_cidr: str, description: str):
+    old_cidr = find_cidr_matching_desc(security_group, options)
+    if old_cidr:
+        if old_cidr == new_cidr:
+            print(f"CIDR {new_cidr} is already allowlisted.")
+            return
+        remove_cidr(options, security_group, f"old value ({old_cidr})", old_cidr)
+        add_cidr(options, security_group, "new value", new_cidr, description)
+
+
+def find_cidr_matching_desc(security_group, options: Namespace) -> Optional[str]:
+    cidrs = [
+        item['CidrIp']
+        for perm in security_group.ip_permissions if
+        perm['IpProtocol'] == 'tcp' and perm['FromPort'] == options.ssh_port and perm['ToPort'] == options.ssh_port
+        for item in perm['IpRanges'] if item.get('Description') == options.desc
+    ]
+    if len(cidrs) == 1:
+        return cidrs[0]
+    elif len(cidrs) > 1:
+        print("Update failed: found more than one CIDR matching description.")
+        return None
+    else:
+        print("Update failed: no CIDR found matching description")
+        return None

@@ -74,6 +74,36 @@ Removed 8.8.8.0/28 from allowlist.
 
 You can use `--auto-desc` or `--desc` when adding custom CIDRs as well if you want to make sure the security group rules have descriptions.  
 
+## Updating an Existing CIDR
+
+If I've already added a CIDR with a description, I can update it to a new value. This is typically useful if your IP address changes from time to time (often true for home connections) or if you work from more than one location but you want to make sure that only the location you're currently working from is on the allowlist.
+
+I can do this by specifying the CIDR:
+```shell
+❯ awswl --sg-name "codiform-bastion" update "8.8.8.8/32" --desc "Geoffrey Home"
+Using security group codiform-bastion (sg-00abcdef9234).
+
+Removed old value (7.7.7.7/32) from allowlist.
+Added new value (8.8.8.8/32) to allowlist w/ description 'Geoffrey Home'```
+
+Or using my current IP Address:
+```shell
+❯ awswl --sg-name "codiform-bastion" update-current --desc "Codiform HQ"
+Using security group codiform-bastion (sg-00abcdef9234).
+
+Removed old value (8.8.8.8/32) from allowlist.
+Added new value (7.7.7.7/32) to allowlist w/ description 'Codiform HQ'
+```
+
+Since the goal here is to update a fixed description with a new value, `--desc` is required and `--auto-desc` is not an option.
+
+If the description matches more than one rule, the update will fail, since it's not likely that you wanted multiple rules with the same new value:
+```shell
+❯ poetry run awswl --sg-name "codiform-bastion" update-current --desc "GitHub Runner"
+Using security group codiform-bastion (sg-00abcdef9234).
+
+Update failed: found more than one CIDR matching description.
+```
 
 ## Required Metadata
 There's a bunch of required metadata to do this properly.

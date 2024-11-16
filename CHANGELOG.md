@@ -2,12 +2,20 @@
 
 ## [1.2.0] - Unreleased
 
+### Added
+
+- New commands to Update a Rule
+  - `update` updates the CIDR block associated with a description to a new specified value
+  - `update-current` updates the CIDR block associated with a description to your current external ip
+  - Documentation for the new commands is available in [Usage](docs/usage.md) 
+
 ### Changed
 
 - Refactored the CLI options
   - The *commands* have been changed from options (e.g. `awswl --list`) to positional arguments (e.g. `awswl list`)
   - This also means that each invocation can only have a single command.
   - Effectively this makes it easier to avoid weird interactions between multiple commands and their options.
+  - Updated documentation in [Usage](docs/usage.md) to match
 
 ### Internals
 
