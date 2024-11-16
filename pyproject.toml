@@ -19,7 +19,9 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11"
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13"
 ]
 
 [tool.poetry.scripts]
@@ -28,9 +30,10 @@ awswl = "awswl.main:main"
 [tool.poetry.dependencies]
 python = "^3.9"
 ipaddress = "^1.0.23"
-boto3 = "^1.35.60"
+boto3 = "^1.35.62"
 requests = "2.32.3"
 usingversion = "^0.1.2"
+urllib3 = "<2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"
