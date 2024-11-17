@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "awswl"
-version = "1.2.0"
+version = "1.2.1"
 description = "A project to make it simple to add/remove ip addresses (or CIDR blocks) from an AWS Security group."
 authors = [
     "Geoffrey Wiseman <geoffrey.wiseman@codiform.com>"
