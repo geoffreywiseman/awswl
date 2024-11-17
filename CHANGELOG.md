@@ -1,6 +1,12 @@
 # Changelog
 
-## [1.2.0] - Unreleased
+## [1.2.1] - 2024-11-16
+
+Discovered after publishing 1.2.0 that the version command which worked locally did not work in the installed version. Fixed and published again.
+
+## [1.2.0] - 2024-11-16
+
+Significant change to the CLI options and the addition of `update` commands.
 
 ### Added
 
