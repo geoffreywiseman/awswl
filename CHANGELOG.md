@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.2] - 2025-02-11
+
+Updated dependencies to address security vulnerabilities. Added scan with safety cli.
+
 ## [1.2.1] - 2024-11-16
 
 Discovered after publishing 1.2.0 that the version command which worked locally did not work in the installed version. Fixed and published again.

@@ -37,3 +37,8 @@ jobs:
 
       - name: Test
         run: poetry run pytest
+
+      - name: Scan with Safety
+        uses: pyupio/safety-action@v1
+        with:
+          api-key: ${{ secrets.SAFETY_API_KEY }}
