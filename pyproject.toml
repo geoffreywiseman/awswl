@@ -31,7 +31,7 @@ awswl = "awswl.main:main"
 python = "^3.10"
 ipaddress = "^1.0.23"
 boto3 = "^1.35.62"
-requests = "2.32.3"
+requests = "2.32.5"
 usingversion = "^0.1.2"
 urllib3 = "<2"
 
