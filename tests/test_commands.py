@@ -291,6 +291,70 @@ def test_remove_specified_indicates_notfound(mock_stdout, region, security_group
            in mock_stdout.getvalue()
 
 
+@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
+@patch('sys.stdout', new_callable=io.StringIO)
+def test_add_current_when_already_present(mock_stdout, exip_method, region, security_group):
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [
+            {'CidrIp': '192.0.2.1/32'},
+            {'CidrIp': '192.0.2.2/32'},
+        ],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id)
+    commands.cmd_add_current(opt)
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert len(after_group.ip_permissions) == 1
+    permission = after_group.ip_permissions[0]
+    assert len(permission['IpRanges']) == 2
+    assert "already allowlisted" in mock_stdout.getvalue()
+
+
+@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
+@patch('sys.stdout', new_callable=io.StringIO)
+def test_add_current_when_containing_rule_present(mock_stdout, exip_method, region, security_group):
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [
+            {'CidrIp': '192.0.2.0/24'},
+        ],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id)
+    commands.cmd_add_current(opt)
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert len(after_group.ip_permissions) == 1
+    permission = after_group.ip_permissions[0]
+    assert len(permission['IpRanges']) == 1
+    assert "already covered by existing rule" in mock_stdout.getvalue()
+
+
+@patch('sys.stdout', new_callable=io.StringIO)
+def test_remove_when_containing_rule_present(mock_stdout, region, security_group):
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [
+            {'CidrIp': '192.0.2.0/24'},
+        ],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id, cidrs=['192.0.2.1/32'])
+    commands.cmd_remove(opt)
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert len(after_group.ip_permissions) == 1
+    permission = after_group.ip_permissions[0]
+    assert len(permission['IpRanges']) == 1
+    assert "192.0.2.0/24" in mock_stdout.getvalue()
+    assert "not directly allowlisted" in mock_stdout.getvalue()
+
+
 def test_add_autodesc(region, security_group):
     x_acquired = date.fromisoformat("2022-10-27")
     opt = options(sgid=security_group.id, auto_desc=True, cidrs=['1.2.3.4/32'])

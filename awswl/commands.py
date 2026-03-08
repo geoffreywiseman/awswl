@@ -86,9 +86,32 @@ def cmd_add_current(options):
         add_cidr(options, security_group, "current external IP address as a CIDR block", cidr, get_description(options))
 
 
+def get_existing_ssh_cidrs(security_group, options):
+    """Returns a list of IPv4 ip_network objects already authorized for the SSH port."""
+    return [
+        ip_network(ip_range['CidrIp'], strict=False)
+        for permission in security_group.ip_permissions
+        if permission['IpProtocol'] == 'tcp' and
+           permission['FromPort'] <= options.ssh_port <= permission['ToPort']
+        for ip_range in permission['IpRanges']
+    ]
+
+
 def add_cidr(options, security_group, explain, cidr, description):
     try:
         if security_group:
+            cidr_network = ip_network(cidr, strict=False)
+            for existing_network in get_existing_ssh_cidrs(security_group, options):
+                if existing_network.version != cidr_network.version:
+                    continue
+                cap_explain = explain[0].capitalize() + explain[1:]
+                if existing_network == cidr_network:
+                    print(f"{cap_explain} ({cidr}) is already allowlisted.")
+                    return
+                elif cidr_network.subnet_of(existing_network):
+                    print(f"{cap_explain} ({cidr}) is already covered by existing rule {existing_network}.")
+                    return
+
             ip_range = dict()
             ip_range['CidrIp'] = cidr
             if description:
@@ -109,8 +132,8 @@ def add_cidr(options, security_group, explain, cidr, description):
                 print(f"Added {explain} ({cidr}) to allowlist w/o description.")
     except ClientError as e:
         if e.response['Error']['Code'] == "InvalidPermission.Duplicate":
-            cap_desc = description[0].capitalize() + description[1:]
-            print(f"{cap_desc} is already allowlisted.")
+            cap_explain = explain[0].capitalize() + explain[1:]
+            print(f"{cap_explain} ({cidr}) is already allowlisted.")
         else:
             print("Unexpected error")
             print(e)
@@ -140,6 +163,19 @@ def cmd_remove_current(options):
 
 def remove_cidr(options: Namespace, security_group, desc: str, cidr: str):
     try:
+        cidr_network = ip_network(cidr, strict=False)
+        existing = get_existing_ssh_cidrs(security_group, options)
+        exact_match = any(existing_network == cidr_network for existing_network in existing)
+        if not exact_match:
+            containing = [
+                n for n in existing
+                if n.version == cidr_network.version and cidr_network.subnet_of(n) and n != cidr_network
+            ]
+            if containing:
+                cap_desc = desc[0].capitalize() + desc[1:]
+                print(f"{cap_desc} is not directly allowlisted, but is covered by {containing[0]}.")
+                return
+
         security_group.revoke_ingress(
             CidrIp=cidr,
             IpProtocol='tcp',
