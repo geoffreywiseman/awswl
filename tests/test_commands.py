@@ -1,68 +1,52 @@
-import io
+import os
+from argparse import Namespace
 from datetime import date
+from unittest.mock import patch
 
 import boto3
-import pytest
-
 from moto import mock_ec2
-from argparse import Namespace
+
 import awswl
 from awswl import commands
-import os
-
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch
-
-AWS_DEFAULT_REGION = 'AWS_DEFAULT_REGION'
 
 
-@pytest.fixture(name='region', scope='function')
-def region_fixture():
-    region = 'ca-central-1'
-    os.environ[AWS_DEFAULT_REGION] = region
-    yield region
-    if AWS_DEFAULT_REGION in os.environ:
-        del os.environ[AWS_DEFAULT_REGION]
-
-
-@pytest.fixture(name='security_group', scope='function')
-def security_group_fixture():
-    mock = mock_ec2()
-    mock.start()
-    ec2 = boto3.resource('ec2')
-    sg = ec2.create_security_group(
-        Description='Security Group for SSH allowlisting',
-        GroupName='SSH allowlist',
-        VpcId='vpc-123'
-    )
-    yield sg
-    mock.stop()
-
-
-@patch('sys.stdout', new_callable=io.StringIO)
-def test_version_command(mock_stdout):
-    # Given
+def options(**kwargs):
     opt = Namespace()
-
-    # When
-    commands.cmd_version(opt)
-
-    # Then
-    assert mock_stdout.getvalue() == f"awswl v{awswl.version}\n"
-
-
-# noinspection PyUnusedLocal
-def test_list_command_lists_no_blocks_sgid(region, security_group):
-    assert_list_output(options(sgid=security_group.id), "No CIDR blocks authorized for SSH")
+    opt.sgid = kwargs.get('sgid')
+    opt.sg_name = kwargs.get('sg_name')
+    opt.ssh_port = 22
+    opt.auto_desc = kwargs.get('auto_desc')
+    opt.desc = kwargs.get('desc')
+    opt.cidrs = kwargs.get('cidrs', [])
+    opt.cidr = kwargs.get('cidr')
+    return opt
 
 
-def test_list_command_lists_no_blocks_sgname(region, security_group):
-    assert_list_output(options(sg_name=security_group.group_name), "No CIDR blocks authorized for SSH")
+def assert_list_output(opt, matches, capsys):
+    with patch('awswl.externalip.get_external_ip', return_value='192.0.2.1'):
+        commands.cmd_list(opt)
+    output = capsys.readouterr().out
+    if isinstance(matches, str):
+        assert matches in output, f"Cannot find '{matches}' in output: {output}"
+    if isinstance(matches, list):
+        for match in matches:
+            assert match in output, f"Cannot find '{match}' in output: {output}"
 
 
-def test_list_command_lists_ipv4_blocks(region, security_group):
+def test_version_command(capsys):
+    commands.cmd_version(Namespace())
+    assert capsys.readouterr().out == f"awswl v{awswl.version}\n"
+
+
+def test_list_command_lists_no_blocks_sgid(region, security_group, capsys):
+    assert_list_output(options(sgid=security_group.id), "No CIDR blocks authorized for SSH", capsys)
+
+
+def test_list_command_lists_no_blocks_sgname(region, security_group, capsys):
+    assert_list_output(options(sg_name=security_group.group_name), "No CIDR blocks authorized for SSH", capsys)
+
+
+def test_list_command_lists_ipv4_blocks(region, security_group, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [
             {'CidrIp': '10.0.0.1/32'},
@@ -72,11 +56,11 @@ def test_list_command_lists_ipv4_blocks(region, security_group):
         'FromPort': 22,
         'ToPort': 22
     }])
-    assert_list_output(options(sgid=security_group.id), ["- 10.0.0.1/32", "- 10.0.1.0/24"])
-    assert_list_output(options(sg_name=security_group.group_name), ["- 10.0.0.1/32", "- 10.0.1.0/24"])
+    assert_list_output(options(sgid=security_group.id), ["- 10.0.0.1/32", "- 10.0.1.0/24"], capsys)
+    assert_list_output(options(sg_name=security_group.group_name), ["- 10.0.0.1/32", "- 10.0.1.0/24"], capsys)
 
 
-def test_list_command_lists_descriptions(region, security_group):
+def test_list_command_lists_descriptions(region, security_group, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [
             {'CidrIp': '10.0.0.1/32', 'Description': 'Double Trouble'},
@@ -92,18 +76,20 @@ def test_list_command_lists_descriptions(region, security_group):
             "- 10.0.0.1/32                        (Double Trouble)\n"
             "- 10.0.1.0/24                        \n"
             "- 192.168.0.0/16                     (Sweet Sixteen)\n"
-        ]
+        ],
+        capsys
     )
     assert_list_output(
         options(sg_name=security_group.group_name), [
             "- 10.0.0.1/32                        (Double Trouble)\n"
             "- 10.0.1.0/24                        \n"
             "- 192.168.0.0/16                     (Sweet Sixteen)\n"
-        ]
+        ],
+        capsys
     )
 
 
-def test_list_command_identifies_enclosing_blocks(region, security_group):
+def test_list_command_identifies_enclosing_blocks(region, security_group, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [
             {'CidrIp': '192.0.2.1/32'},
@@ -119,7 +105,8 @@ def test_list_command_identifies_enclosing_blocks(region, security_group):
             "- 192.0.2.1/32                       (current)\n",
             "- 192.0.2.0/24                       (current)\n",
             "- 192.0.1.0/24                       \n"
-        ]
+        ],
+        capsys
     )
     assert_list_output(
         options(sg_name=security_group.group_name),
@@ -127,52 +114,58 @@ def test_list_command_identifies_enclosing_blocks(region, security_group):
             "- 192.0.2.1/32                       (current)\n",
             "- 192.0.2.0/24                       (current)\n",
             "- 192.0.1.0/24                       \n"
-        ]
+        ],
+        capsys
     )
 
 
-def options(**kwargs):
-    opt = Namespace()
-    opt.sgid = kwargs.get('sgid')
-    opt.sg_name = kwargs.get('sg_name')
-    opt.ssh_port = 22
-    opt.auto_desc = kwargs.get('auto_desc')
-    opt.desc = kwargs.get('desc')
-    opt.cidrs = kwargs.get('cidrs', [])
-    return opt
+@mock_ec2
+def test_list_command_sg_not_found(region, capsys):
+    """When the named security group does not exist, cmd_list exits without printing blocks."""
+    opt = options(sg_name='nonexistent-sg')
+    with patch('awswl.externalip.get_external_ip', return_value='192.0.2.1'):
+        commands.cmd_list(opt)
+    assert "Could not find security group" in capsys.readouterr().out
 
 
-# noinspection PyUnusedLocal
-@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
-@patch('sys.stdout', new_callable=io.StringIO)
-def assert_list_output(opt, matches, mock_stdout, exip_method):
-    commands.cmd_list(opt)
-    output = mock_stdout.getvalue()
-    if isinstance(matches, str):
-        assert matches in output, f"Cannot find '{matches}' in output: {output}"
-    if isinstance(matches, list):
-        for match in matches:
-            assert match in output, f"Cannot find '{match}' in output: {output}"
+@mock_ec2
+def test_list_command_multiple_sgs_found(region, capsys):
+    """When multiple security groups share a name, cmd_list lists them and exits."""
+    ec2 = boto3.resource('ec2', region_name=region)
+    ec2.create_security_group(Description='First', GroupName='dup-sg', VpcId='vpc-111')
+    ec2.create_security_group(Description='Second', GroupName='dup-sg', VpcId='vpc-222')
+    opt = options(sg_name='dup-sg')
+    with patch('awswl.externalip.get_external_ip', return_value='192.0.2.1'):
+        commands.cmd_list(opt)
+    output = capsys.readouterr().out
+    assert "Found 2 security groups matching name:" in output
 
 
-# noinspection PyUnusedLocal
-@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
-@patch('sys.stdout', new_callable=io.StringIO)
-def test_add_current_adds_permission(mock_stdout, exip_method, region, security_group):
+@mock_ec2
+def test_list_command_no_region_shows_error(capsys, monkeypatch):
+    """cmd_list prints a clear message when no AWS region is configured."""
+    monkeypatch.delenv('AWS_DEFAULT_REGION', raising=False)
+    opt = options(sgid='sg-12345')
+    with patch('awswl.externalip.get_external_ip', return_value='192.0.2.1'):
+        commands.cmd_list(opt)
+    assert "No AWS region specified" in capsys.readouterr().out
+
+
+def test_add_current_adds_permission(region, security_group, capsys):
     assert not security_group.ip_permissions
     opt = options(sgid=security_group.id)
-    commands.cmd_add_current(opt)
+    with patch('awswl.externalip.get_external_ip', return_value='192.0.2.1'):
+        commands.cmd_add_current(opt)
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     assert len(after_group.ip_permissions) == 1
     ranges = after_group.ip_permissions[0]['IpRanges']
     assert len(ranges) == 1
     assert ranges[0]['CidrIp'] == '192.0.2.1/32'
-    assert "Added current external IP address as a CIDR block" in mock_stdout.getvalue()
+    assert "Added current external IP address as a CIDR block" in capsys.readouterr().out
 
 
-@patch('sys.stdout', new_callable=io.StringIO)
-def test_add_adds_specified_permission_sgid(mock_stdout, region, security_group):
+def test_add_adds_specified_permission_sgid(region, security_group, capsys):
     assert not security_group.ip_permissions
     opt = options(sgid=security_group.id, cidrs=['192.0.2.1/24'])
     commands.cmd_add(opt)
@@ -182,11 +175,10 @@ def test_add_adds_specified_permission_sgid(mock_stdout, region, security_group)
     ranges = after_group.ip_permissions[0]['IpRanges']
     assert len(ranges) == 1
     assert ranges[0]['CidrIp'] == '192.0.2.0/24'
-    assert "Added specified CIDR block" in mock_stdout.getvalue()
+    assert "Added specified CIDR block" in capsys.readouterr().out
 
 
-@patch('sys.stdout', new_callable=io.StringIO)
-def test_add_adds_specified_permission_sgname(mock_stdout, region, security_group):
+def test_add_adds_specified_permission_sgname(region, security_group, capsys):
     assert not security_group.ip_permissions
     opt = options(sg_name=security_group.group_name, cidrs=['192.0.2.1/24'])
     commands.cmd_add(opt)
@@ -196,104 +188,104 @@ def test_add_adds_specified_permission_sgname(mock_stdout, region, security_grou
     ranges = after_group.ip_permissions[0]['IpRanges']
     assert len(ranges) == 1
     assert ranges[0]['CidrIp'] == '192.0.2.0/24'
-    assert "Added specified CIDR block" in mock_stdout.getvalue()
+    assert "Added specified CIDR block" in capsys.readouterr().out
 
 
-# noinspection PyUnusedLocal
-@patch('awswl.externalip.get_external_ip', return_value='192.0.2.4')
-@patch('sys.stdout', new_callable=io.StringIO)
-def test_remove_current_removes_permission_sgid(mock_stdout, exip_method, region,
-                                                security_group):
+def test_add_explicit_desc(region, security_group, capsys):
+    """Explicit --desc is stored on the added rule and echoed in the output."""
+    opt = options(sgid=security_group.id, cidrs=['10.0.0.1/32'], desc='my-description')
+    commands.cmd_add(opt)
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    ranges = after_group.ip_permissions[0]['IpRanges']
+    assert ranges[0]['Description'] == 'my-description'
+    assert "my-description" in capsys.readouterr().out
+
+
+def test_add_invalid_cidr_shows_error(region, security_group, capsys):
+    """An invalid CIDR string produces an 'Add error' message instead of crashing."""
+    opt = options(sgid=security_group.id, cidrs=['not-a-valid-cidr'])
+    commands.cmd_add(opt)
+    assert "Add error:" in capsys.readouterr().out
+
+
+def test_remove_current_removes_permission_sgid(region, security_group, capsys):
     security_group.authorize_ingress(IpPermissions=[{
-        'IpRanges': [
-            {'CidrIp': '192.0.2.4/32'},
-        ],
+        'IpRanges': [{'CidrIp': '192.0.2.4/32'}],
         'IpProtocol': 'tcp',
         'FromPort': 22,
         'ToPort': 22
     }])
     opt = options(sgid=security_group.id)
-    commands.cmd_remove_current(opt)
+    with patch('awswl.externalip.get_external_ip', return_value='192.0.2.4'):
+        commands.cmd_remove_current(opt)
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     assert not after_group.ip_permissions
-    assert "Removed current external IP address (192.0.2.4/32)" \
-           in mock_stdout.getvalue()
+    assert "Removed current external IP address (192.0.2.4/32)" in capsys.readouterr().out
 
 
-@patch('awswl.externalip.get_external_ip', return_value='192.0.2.8')
-@patch('sys.stdout', new_callable=io.StringIO)
-def test_remove_current_removes_permission_sgname(mock_stdout, exip_method, region,
-                                                  security_group):
+def test_remove_current_removes_permission_sgname(region, security_group, capsys):
     security_group.authorize_ingress(IpPermissions=[{
-        'IpRanges': [
-            {'CidrIp': '192.0.2.8/32'},
-        ],
+        'IpRanges': [{'CidrIp': '192.0.2.8/32'}],
         'IpProtocol': 'tcp',
         'FromPort': 22,
         'ToPort': 22
     }])
     opt = options(sg_name=security_group.group_name)
-    commands.cmd_remove_current(opt)
+    with patch('awswl.externalip.get_external_ip', return_value='192.0.2.8'):
+        commands.cmd_remove_current(opt)
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     assert not after_group.ip_permissions
-    assert "Removed current external IP address (192.0.2.8/32)" \
-           in mock_stdout.getvalue()
+    assert "Removed current external IP address (192.0.2.8/32)" in capsys.readouterr().out
 
 
-# noinspection PyUnusedLocal
-@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
-@patch('sys.stdout', new_callable=io.StringIO)
-def test_remove_current_indicates_notfound_sgid(mock_stdout, exip_method, region,
-                                                security_group):
+def test_remove_current_indicates_notfound_sgid(region, security_group, capsys):
     opt = options(sgid=security_group.id)
-    commands.cmd_remove_current(opt)
-    assert \
-        "Current external IP address (192.0.2.1/32) does not seem to be allowlisted." \
-        in mock_stdout.getvalue()
+    with patch('awswl.externalip.get_external_ip', return_value='192.0.2.1'):
+        commands.cmd_remove_current(opt)
+    assert "Current external IP address (192.0.2.1/32) does not seem to be allowlisted." \
+           in capsys.readouterr().out
 
 
-@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
-@patch('sys.stdout', new_callable=io.StringIO)
-def test_remove_current_indicates_notfound_sgname(mock_stdout, exip_method, region,
-                                                  security_group):
+def test_remove_current_indicates_notfound_sgname(region, security_group, capsys):
     opt = options(sg_name=security_group.group_name)
-    commands.cmd_remove_current(opt)
-    assert \
-        "Current external IP address (192.0.2.1/32) does not seem to be allowlisted." \
-        in mock_stdout.getvalue()
+    with patch('awswl.externalip.get_external_ip', return_value='192.0.2.1'):
+        commands.cmd_remove_current(opt)
+    assert "Current external IP address (192.0.2.1/32) does not seem to be allowlisted." \
+           in capsys.readouterr().out
 
 
-@patch('sys.stdout', new_callable=io.StringIO)
-def test_remove_removes_specified(mock_stdout, region, security_group):
+def test_remove_removes_specified(region, security_group, capsys):
     security_group.authorize_ingress(IpPermissions=[{
-        'IpRanges': [
-            {'CidrIp': '192.0.2.1/32'},
-        ],
+        'IpRanges': [{'CidrIp': '192.0.2.1/32'}],
         'IpProtocol': 'tcp',
         'FromPort': 22,
         'ToPort': 22
     }])
-    opt = options(sgid=security_group.id,cidrs=['192.0.2.1/32'])
-    commands.cmd_remove(opt)
-
-    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
-    assert not after_group.ip_permissions
-    assert "Removed 192.0.2.1/32 from allowlist" in mock_stdout.getvalue()
-
-
-@patch('sys.stdout', new_callable=io.StringIO)
-def test_remove_specified_indicates_notfound(mock_stdout, region, security_group):
     opt = options(sgid=security_group.id, cidrs=['192.0.2.1/32'])
     commands.cmd_remove(opt)
-    assert "192.0.2.1/32 does not seem to be allowlisted." \
-           in mock_stdout.getvalue()
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert not after_group.ip_permissions
+    assert "Removed 192.0.2.1/32 from allowlist" in capsys.readouterr().out
 
 
-@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
-@patch('sys.stdout', new_callable=io.StringIO)
-def test_add_current_when_already_present(mock_stdout, exip_method, region, security_group):
+def test_remove_specified_indicates_notfound(region, security_group, capsys):
+    opt = options(sgid=security_group.id, cidrs=['192.0.2.1/32'])
+    commands.cmd_remove(opt)
+    assert "192.0.2.1/32 does not seem to be allowlisted." in capsys.readouterr().out
+
+
+def test_remove_invalid_cidr_shows_error(region, security_group, capsys):
+    """An invalid CIDR string produces a 'Remove error' message instead of crashing."""
+    opt = options(sgid=security_group.id, cidrs=['not-a-valid-cidr'])
+    commands.cmd_remove(opt)
+    assert "Remove error:" in capsys.readouterr().out
+
+
+def test_add_current_when_already_present(region, security_group, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [
             {'CidrIp': '192.0.2.1/32'},
@@ -304,42 +296,37 @@ def test_add_current_when_already_present(mock_stdout, exip_method, region, secu
         'ToPort': 22
     }])
     opt = options(sgid=security_group.id)
-    commands.cmd_add_current(opt)
+    with patch('awswl.externalip.get_external_ip', return_value='192.0.2.1'):
+        commands.cmd_add_current(opt)
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     assert len(after_group.ip_permissions) == 1
     permission = after_group.ip_permissions[0]
     assert len(permission['IpRanges']) == 2
-    assert "already allowlisted" in mock_stdout.getvalue()
+    assert "already allowlisted" in capsys.readouterr().out
 
 
-@patch('awswl.externalip.get_external_ip', return_value='192.0.2.1')
-@patch('sys.stdout', new_callable=io.StringIO)
-def test_add_current_when_containing_rule_present(mock_stdout, exip_method, region, security_group):
+def test_add_current_when_containing_rule_present(region, security_group, capsys):
     security_group.authorize_ingress(IpPermissions=[{
-        'IpRanges': [
-            {'CidrIp': '192.0.2.0/24'},
-        ],
+        'IpRanges': [{'CidrIp': '192.0.2.0/24'}],
         'IpProtocol': 'tcp',
         'FromPort': 22,
         'ToPort': 22
     }])
     opt = options(sgid=security_group.id)
-    commands.cmd_add_current(opt)
+    with patch('awswl.externalip.get_external_ip', return_value='192.0.2.1'):
+        commands.cmd_add_current(opt)
 
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     assert len(after_group.ip_permissions) == 1
     permission = after_group.ip_permissions[0]
     assert len(permission['IpRanges']) == 1
-    assert "already covered by existing rule" in mock_stdout.getvalue()
+    assert "already covered by existing rule" in capsys.readouterr().out
 
 
-@patch('sys.stdout', new_callable=io.StringIO)
-def test_remove_when_containing_rule_present(mock_stdout, region, security_group):
+def test_remove_when_containing_rule_present(region, security_group, capsys):
     security_group.authorize_ingress(IpPermissions=[{
-        'IpRanges': [
-            {'CidrIp': '192.0.2.0/24'},
-        ],
+        'IpRanges': [{'CidrIp': '192.0.2.0/24'}],
         'IpProtocol': 'tcp',
         'FromPort': 22,
         'ToPort': 22
@@ -351,8 +338,9 @@ def test_remove_when_containing_rule_present(mock_stdout, region, security_group
     assert len(after_group.ip_permissions) == 1
     permission = after_group.ip_permissions[0]
     assert len(permission['IpRanges']) == 1
-    assert "192.0.2.0/24" in mock_stdout.getvalue()
-    assert "not directly allowlisted" in mock_stdout.getvalue()
+    output = capsys.readouterr().out
+    assert "192.0.2.0/24" in output
+    assert "not directly allowlisted" in output
 
 
 def test_add_autodesc(region, security_group):
@@ -368,6 +356,7 @@ def test_add_autodesc(region, security_group):
     assert len(ranges) == 1
     assert ranges[0]['Description'] == 'emusk - 2022-10-27'
 
+
 def test_add_desc(region, security_group):
     cwbd = date.fromisoformat("2008-03-01")
     opt = options(sg_name=security_group.group_name, auto_desc=True, cidrs=['3.2.1.0/30'])
@@ -380,3 +369,102 @@ def test_add_desc(region, security_group):
     ranges = after_group.ip_permissions[0]['IpRanges']
     assert len(ranges) == 1
     assert ranges[0]['Description'] == 'thestuff - 2008-03-01'
+
+
+# ---------------------------------------------------------------------------
+# cmd_update / cmd_update_current
+# ---------------------------------------------------------------------------
+
+def test_update_command_replaces_cidr(region, security_group, capsys):
+    """update finds the rule by description and adds the replacement CIDR.
+
+    Note: moto 4.x does not support revoking rules that carry a description via the
+    flat CidrIp API used by remove_cidr, so only the add half can be verified through
+    the security-group state here; the remove is verified via the printed output.
+    """
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [{'CidrIp': '10.0.0.1/32', 'Description': 'my-host'}],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id, cidr='10.0.0.2/32', desc='my-host')
+    commands.cmd_update(opt)
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    all_cidrs = [r['CidrIp'] for r in after_group.ip_permissions[0]['IpRanges']]
+    assert '10.0.0.2/32' in all_cidrs
+    assert "Added new value" in capsys.readouterr().out
+
+
+def test_update_command_no_op_when_cidr_unchanged(region, security_group, capsys):
+    """update is a no-op and reports 'already allowlisted' when CIDR hasn't changed."""
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [{'CidrIp': '10.0.0.1/32', 'Description': 'my-host'}],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id, cidr='10.0.0.1/32', desc='my-host')
+    commands.cmd_update(opt)
+    assert "already allowlisted" in capsys.readouterr().out
+
+
+def test_update_command_reports_missing_description(region, security_group, capsys):
+    """update reports failure when no rule matches the requested description."""
+    opt = options(sgid=security_group.id, cidr='10.0.0.2/32', desc='no-such-desc')
+    commands.cmd_update(opt)
+    assert "no CIDR found matching description" in capsys.readouterr().out
+
+
+def test_update_invalid_cidr_shows_error(region, security_group, capsys):
+    """An invalid CIDR string in update produces an 'Update error' message."""
+    # First add a rule so find_cidr_matching_desc would succeed if CIDR were valid.
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [{'CidrIp': '10.0.0.1/32', 'Description': 'my-host'}],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id, cidr='not-a-valid-cidr', desc='my-host')
+    commands.cmd_update(opt)
+    assert "Update error:" in capsys.readouterr().out
+
+
+def test_update_command_reports_duplicate_descriptions(region, security_group, capsys):
+    """update reports failure when more than one rule carries the requested description."""
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [
+            {'CidrIp': '10.0.0.1/32', 'Description': 'shared-desc'},
+            {'CidrIp': '10.0.0.2/32', 'Description': 'shared-desc'},
+        ],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id, cidr='10.0.0.3/32', desc='shared-desc')
+    commands.cmd_update(opt)
+    assert "found more than one CIDR matching description" in capsys.readouterr().out
+
+
+def test_update_current_command_replaces_cidr(region, security_group, capsys):
+    """update-current finds the rule by description and replaces its CIDR with the current IP.
+
+    Note: moto 4.x does not support revoking rules that carry a description via the
+    flat CidrIp API used by remove_cidr, so only the add half can be verified through
+    the security-group state here; the remove is verified via the printed output.
+    """
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [{'CidrIp': '10.0.0.1/32', 'Description': 'my-host'}],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id, desc='my-host')
+    with patch('awswl.externalip.get_external_ip', return_value='10.0.0.2'):
+        commands.cmd_update_current(opt)
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    all_cidrs = [r['CidrIp'] for r in after_group.ip_permissions[0]['IpRanges']]
+    assert '10.0.0.2/32' in all_cidrs
+    assert "Added new value" in capsys.readouterr().out

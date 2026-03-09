@@ -24,3 +24,7 @@ Pipfile.lock
 
 # Moto Tests
 /tests/test_moto_*.py
+
+# Coverage
+.coverage
+htmlcov/
