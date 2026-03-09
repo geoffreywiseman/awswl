@@ -73,17 +73,17 @@ def test_list_command_lists_descriptions(region, security_group, capsys):
     }])
     assert_list_output(
         options(sgid=security_group.id), [
-            "- 10.0.0.1/32                        (Double Trouble)\n"
-            "- 10.0.1.0/24                        \n"
-            "- 192.168.0.0/16                     (Sweet Sixteen)\n"
+            "- 10.0.0.1/32                        (Double Trouble)\n",
+            "- 10.0.1.0/24                        \n",
+            "- 192.168.0.0/16                     (Sweet Sixteen)\n",
         ],
         capsys
     )
     assert_list_output(
         options(sg_name=security_group.group_name), [
-            "- 10.0.0.1/32                        (Double Trouble)\n"
-            "- 10.0.1.0/24                        \n"
-            "- 192.168.0.0/16                     (Sweet Sixteen)\n"
+            "- 10.0.0.1/32                        (Double Trouble)\n",
+            "- 10.0.1.0/24                        \n",
+            "- 192.168.0.0/16                     (Sweet Sixteen)\n",
         ],
         capsys
     )
