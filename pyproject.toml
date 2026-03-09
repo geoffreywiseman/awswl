@@ -36,7 +36,7 @@ usingversion = "^0.1.2"
 urllib3 = "<3"
 
 [tool.poetry.group.dev.dependencies]
-pytest = ">=8.4.2,<9.0.0"
+pytest = "^8.4.2"
 moto = "^4.2.2"
 mock = "^5.1.0"
 ruff = ">=0.7.3,<0.16.0"
