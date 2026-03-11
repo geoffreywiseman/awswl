@@ -2,7 +2,7 @@ import os
 
 import boto3
 import pytest
-from moto import mock_ec2
+from moto import mock_aws
 
 _AWS_DEFAULT_REGION = 'AWS_DEFAULT_REGION'
 
@@ -18,7 +18,7 @@ def region_fixture():
 
 @pytest.fixture(name='security_group')
 def security_group_fixture(region):
-    with mock_ec2():
+    with mock_aws():
         ec2 = boto3.resource('ec2', region_name=region)
         sg = ec2.create_security_group(
             Description='Security Group for SSH allowlisting',

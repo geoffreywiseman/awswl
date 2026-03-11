@@ -1,12 +1,12 @@
 import boto3
 
-from moto import mock_ec2
+from moto import mock_aws
 
 
 # Tests of Moto
 # One of these was failing, passes now.
 
-@mock_ec2
+@mock_aws
 def test_security_group_ingress_succeeds():
     ec2 = boto3.resource('ec2', 'ca-central-1')
     sg = ec2.create_security_group(Description='Test SG', GroupName='test-sg')
@@ -31,7 +31,7 @@ def test_security_group_ingress_succeeds():
     assert len(sg_after.ip_permissions) == 1
 
 
-@mock_ec2
+@mock_aws
 def test_security_group_ingress_fails_without_multirule():
     ec2 = boto3.resource('ec2', 'ca-central-1')
     sg = ec2.create_security_group(Description='Test SG', GroupName='test-sg')
@@ -43,7 +43,7 @@ def test_security_group_ingress_fails_without_multirule():
     assert len(sg.ip_permissions) == 1
 
 
-@mock_ec2
+@mock_aws
 def test_security_group_ingress_fails_without_multirule_after_reload():
     ec2 = boto3.resource('ec2', 'ca-central-1')
     sg = ec2.create_security_group(Description='Test SG', GroupName='test-sg')

@@ -4,7 +4,7 @@ from datetime import date
 from unittest.mock import patch
 
 import boto3
-from moto import mock_ec2
+from moto import mock_aws
 
 import awswl
 from awswl import commands
@@ -119,7 +119,7 @@ def test_list_command_identifies_enclosing_blocks(region, security_group, capsys
     )
 
 
-@mock_ec2
+@mock_aws
 def test_list_command_sg_not_found(region, capsys):
     """When the named security group does not exist, cmd_list exits without printing blocks."""
     opt = options(sg_name='nonexistent-sg')
@@ -128,7 +128,7 @@ def test_list_command_sg_not_found(region, capsys):
     assert "Could not find security group" in capsys.readouterr().out
 
 
-@mock_ec2
+@mock_aws
 def test_list_command_multiple_sgs_found(region, capsys):
     """When multiple security groups share a name, cmd_list lists them and exits."""
     ec2 = boto3.resource('ec2', region_name=region)
@@ -141,7 +141,7 @@ def test_list_command_multiple_sgs_found(region, capsys):
     assert "Found 2 security groups matching name:" in output
 
 
-@mock_ec2
+@mock_aws
 def test_list_command_no_region_shows_error(capsys, monkeypatch):
     """cmd_list prints a clear message when no AWS region is configured."""
     monkeypatch.delenv('AWS_DEFAULT_REGION', raising=False)
@@ -376,12 +376,7 @@ def test_add_desc(region, security_group):
 # ---------------------------------------------------------------------------
 
 def test_update_command_replaces_cidr(region, security_group, capsys):
-    """update finds the rule by description and adds the replacement CIDR.
-
-    Note: moto 4.x does not support revoking rules that carry a description via the
-    flat CidrIp API used by remove_cidr, so only the add half can be verified through
-    the security-group state here; the remove is verified via the printed output.
-    """
+    """update finds the rule by description, removes the old CIDR, and adds the replacement."""
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [{'CidrIp': '10.0.0.1/32', 'Description': 'my-host'}],
         'IpProtocol': 'tcp',
@@ -394,6 +389,7 @@ def test_update_command_replaces_cidr(region, security_group, capsys):
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     all_cidrs = [r['CidrIp'] for r in after_group.ip_permissions[0]['IpRanges']]
     assert '10.0.0.2/32' in all_cidrs
+    assert '10.0.0.1/32' not in all_cidrs
     assert "Added new value" in capsys.readouterr().out
 
 
@@ -448,12 +444,7 @@ def test_update_command_reports_duplicate_descriptions(region, security_group, c
 
 
 def test_update_current_command_replaces_cidr(region, security_group, capsys):
-    """update-current finds the rule by description and replaces its CIDR with the current IP.
-
-    Note: moto 4.x does not support revoking rules that carry a description via the
-    flat CidrIp API used by remove_cidr, so only the add half can be verified through
-    the security-group state here; the remove is verified via the printed output.
-    """
+    """update-current finds the rule by description and replaces its CIDR with the current IP."""
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [{'CidrIp': '10.0.0.1/32', 'Description': 'my-host'}],
         'IpProtocol': 'tcp',
@@ -467,4 +458,5 @@ def test_update_current_command_replaces_cidr(region, security_group, capsys):
     after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
     all_cidrs = [r['CidrIp'] for r in after_group.ip_permissions[0]['IpRanges']]
     assert '10.0.0.2/32' in all_cidrs
+    assert '10.0.0.1/32' not in all_cidrs
     assert "Added new value" in capsys.readouterr().out
