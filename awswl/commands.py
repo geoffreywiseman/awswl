@@ -87,14 +87,24 @@ def cmd_add_current(options):
 
 
 def get_existing_ssh_cidrs(security_group, options):
-    """Returns a list of IPv4 ip_network objects already authorized for the SSH port."""
-    return [
-        ip_network(ip_range['CidrIp'], strict=False)
+    """Returns a list of ip_network objects (IPv4 and IPv6) already authorized for the SSH port."""
+    ssh_permissions = [
+        permission
         for permission in security_group.ip_permissions
         if permission['IpProtocol'] == 'tcp' and
            permission['FromPort'] <= options.ssh_port <= permission['ToPort']
-        for ip_range in permission['IpRanges']
     ]
+    networks = [
+        ip_network(ip_range['CidrIp'], strict=False)
+        for permission in ssh_permissions
+        for ip_range in permission.get('IpRanges', [])
+    ]
+    networks += [
+        ip_network(ip_range['CidrIpv6'], strict=False)
+        for permission in ssh_permissions
+        for ip_range in permission.get('Ipv6Ranges', [])
+    ]
+    return networks
 
 
 def add_cidr(options, security_group, explain, cidr, description):
@@ -113,13 +123,18 @@ def add_cidr(options, security_group, explain, cidr, description):
                     return
 
             ip_range = dict()
-            ip_range['CidrIp'] = cidr
+            if cidr_network.version == 6:
+                ip_range['CidrIpv6'] = cidr
+                ranges_key = 'Ipv6Ranges'
+            else:
+                ip_range['CidrIp'] = cidr
+                ranges_key = 'IpRanges'
             if description:
                 ip_range['Description'] = description
             security_group.authorize_ingress(
                 IpPermissions=[
                     {
-                        'IpRanges': [ip_range],
+                        ranges_key: [ip_range],
                         'IpProtocol': 'tcp',
                         'FromPort': options.ssh_port,
                         'ToPort': options.ssh_port
@@ -176,12 +191,20 @@ def remove_cidr(options: Namespace, security_group, desc: str, cidr: str):
                 print(f"{cap_desc} is not directly allowlisted, but is covered by {containing[0]}.")
                 return
 
-        security_group.revoke_ingress(
-            CidrIp=cidr,
-            IpProtocol='tcp',
-            FromPort=options.ssh_port,
-            ToPort=options.ssh_port
-        )
+        if cidr_network.version == 6:
+            security_group.revoke_ingress(IpPermissions=[{
+                'IpProtocol': 'tcp',
+                'FromPort': options.ssh_port,
+                'ToPort': options.ssh_port,
+                'Ipv6Ranges': [{'CidrIpv6': cidr}]
+            }])
+        else:
+            security_group.revoke_ingress(
+                CidrIp=cidr,
+                IpProtocol='tcp',
+                FromPort=options.ssh_port,
+                ToPort=options.ssh_port
+            )
         print(f"Removed {desc} from allowlist.")
     except ClientError as e:
         if e.response['Error']['Code'] == "InvalidPermission.NotFound":
