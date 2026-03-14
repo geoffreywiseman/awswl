@@ -155,7 +155,6 @@ def test_list_command_multiple_sgs_found(region, capsys):
     assert "Found 2 security groups matching name:" in output
 
 
-@mock_aws
 def test_list_command_no_region_shows_error(capsys, monkeypatch):
     """cmd_list prints a clear message when no AWS region is configured."""
     monkeypatch.delenv('AWS_DEFAULT_REGION', raising=False)
