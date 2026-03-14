@@ -60,6 +60,20 @@ def test_list_command_lists_ipv4_blocks(region, security_group, capsys):
     assert_list_output(options(sg_name=security_group.group_name), ["- 10.0.0.1/32", "- 10.0.1.0/24"], capsys)
 
 
+def test_list_command_lists_ipv6_blocks(region, security_group, capsys):
+    security_group.authorize_ingress(IpPermissions=[{
+        'Ipv6Ranges': [
+            {'CidrIpv6': '2001:db8::/32'},
+            {'CidrIpv6': '2001:db8:1::/48'}
+        ],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    assert_list_output(options(sgid=security_group.id), ["- 2001:db8::/32", "- 2001:db8:1::/48"], capsys)
+    assert_list_output(options(sg_name=security_group.group_name), ["- 2001:db8::/32", "- 2001:db8:1::/48"], capsys)
+
+
 def test_list_command_lists_descriptions(region, security_group, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [
@@ -209,6 +223,51 @@ def test_add_invalid_cidr_shows_error(region, security_group, capsys):
     assert "Add error:" in capsys.readouterr().out
 
 
+def test_add_adds_specified_ipv6_permission(region, security_group, capsys):
+    assert not security_group.ip_permissions
+    opt = options(sgid=security_group.id, cidrs=['2001:db8::/32'])
+    commands.cmd_add(opt)
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert len(after_group.ip_permissions) == 1
+    ipv6_ranges = after_group.ip_permissions[0]['Ipv6Ranges']
+    assert len(ipv6_ranges) == 1
+    assert ipv6_ranges[0]['CidrIpv6'] == '2001:db8::/32'
+    assert "Added specified CIDR block" in capsys.readouterr().out
+
+
+def test_add_ipv6_when_already_present(region, security_group, capsys):
+    security_group.authorize_ingress(IpPermissions=[{
+        'Ipv6Ranges': [{'CidrIpv6': '2001:db8::/32'}],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id, cidrs=['2001:db8::/32'])
+    commands.cmd_add(opt)
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert len(after_group.ip_permissions) == 1
+    assert len(after_group.ip_permissions[0]['Ipv6Ranges']) == 1
+    assert "already allowlisted" in capsys.readouterr().out
+
+
+def test_add_ipv6_when_containing_rule_present(region, security_group, capsys):
+    security_group.authorize_ingress(IpPermissions=[{
+        'Ipv6Ranges': [{'CidrIpv6': '2001:db8::/32'}],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id, cidrs=['2001:db8:1::/48'])
+    commands.cmd_add(opt)
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert len(after_group.ip_permissions) == 1
+    assert len(after_group.ip_permissions[0]['Ipv6Ranges']) == 1
+    assert "already covered by existing rule" in capsys.readouterr().out
+
+
 def test_remove_current_removes_permission_sgid(region, security_group, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [{'CidrIp': '192.0.2.4/32'}],
@@ -283,6 +342,44 @@ def test_remove_invalid_cidr_shows_error(region, security_group, capsys):
     opt = options(sgid=security_group.id, cidrs=['not-a-valid-cidr'])
     commands.cmd_remove(opt)
     assert "Remove error:" in capsys.readouterr().out
+
+
+def test_remove_removes_specified_ipv6(region, security_group, capsys):
+    security_group.authorize_ingress(IpPermissions=[{
+        'Ipv6Ranges': [{'CidrIpv6': '2001:db8::/32'}],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id, cidrs=['2001:db8::/32'])
+    commands.cmd_remove(opt)
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert not after_group.ip_permissions
+    assert "Removed 2001:db8::/32 from allowlist" in capsys.readouterr().out
+
+
+def test_remove_specified_ipv6_indicates_notfound(region, security_group, capsys):
+    opt = options(sgid=security_group.id, cidrs=['2001:db8::/32'])
+    commands.cmd_remove(opt)
+    assert "2001:db8::/32 does not seem to be allowlisted." in capsys.readouterr().out
+
+
+def test_remove_when_ipv6_containing_rule_present(region, security_group, capsys):
+    security_group.authorize_ingress(IpPermissions=[{
+        'Ipv6Ranges': [{'CidrIpv6': '2001:db8::/32'}],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id, cidrs=['2001:db8:1::/48'])
+    commands.cmd_remove(opt)
+
+    after_group = boto3.resource('ec2').SecurityGroup(security_group.id)
+    assert len(after_group.ip_permissions) == 1
+    output = capsys.readouterr().out
+    assert "2001:db8::/32" in output
+    assert "not directly allowlisted" in output
 
 
 def test_add_current_when_already_present(region, security_group, capsys):
