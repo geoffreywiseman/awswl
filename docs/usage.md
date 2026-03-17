@@ -138,9 +138,19 @@ If you want to modify a port other than the default SSH port, you can specify th
 
 ### Current IP Address
 
-In order to get your current ip address, ``--list``, ``--add-current`` and ``--remove-current`` will make a request to ``checkip.amazonaws.org``. Because it's another AWS service, seems less likely to be a privacy concern for anyone.
+In order to get your current ip address, ``list``, ``add-current``, ``remove-current``, and ``update-current`` will make a request to ``checkip.amazonaws.com``. Because it's another AWS service, seems less likely to be a privacy concern for anyone.
 
-I may [add a switch](https://github.com/geoffreywiseman/awswl/issues/3) to disable that for anyone who isn't fond of `awswl` making an additional network request, so if that's a concern for you, feel free to vote for it.
+If you don't need or want those requests (e.g. you don't need the ``(current)`` marker in ``list``, or you prefer not to make additional network requests), you can disable them with ``--disable-current``:
+
+```shell
+❯ awswl --sgid sg-0123456abc --disable-current list
+The following CIDR blocks are authorized for SSH:
+- 192.168.0.0/16                    (Bastion Host)
+- 172.16.0.0/21
+- 8.8.8.8/32                        (Quad 8)
+```
+
+Note that ``--disable-current`` cannot be used together with ``add-current``, ``remove-current``, or ``update-current``, since those commands require the current IP address to function.
 
 ## Help and Version
 

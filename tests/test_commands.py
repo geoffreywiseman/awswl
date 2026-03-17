@@ -19,6 +19,7 @@ def options(**kwargs):
     opt.desc = kwargs.get('desc')
     opt.cidrs = kwargs.get('cidrs', [])
     opt.cidr = kwargs.get('cidr')
+    opt.disable_current = kwargs.get('disable_current', False)
     return opt
 
 
@@ -557,3 +558,39 @@ def test_update_current_command_replaces_cidr(region, security_group, capsys):
     assert '10.0.0.2/32' in all_cidrs
     assert '10.0.0.1/32' not in all_cidrs
     assert "Added new value" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
+# --disable-current
+# ---------------------------------------------------------------------------
+
+def test_list_command_disable_current_skips_ip_fetch(region, security_group, capsys):
+    """cmd_list with disable_current=True should not call get_external_ip."""
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [{'CidrIp': '192.0.2.1/32'}],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id, disable_current=True)
+    with patch('awswl.externalip.get_external_ip') as mock_get_ip:
+        commands.cmd_list(opt)
+        mock_get_ip.assert_not_called()
+    output = capsys.readouterr().out
+    assert "192.0.2.1/32" in output
+    assert "(current)" not in output
+
+
+def test_list_command_disable_current_no_current_marker(region, security_group, capsys):
+    """cmd_list with disable_current=True should not mark any block as (current)."""
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [{'CidrIp': '10.0.0.1/32'}],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id, disable_current=True)
+    commands.cmd_list(opt)
+    output = capsys.readouterr().out
+    assert "10.0.0.1/32" in output
+    assert "(current)" not in output

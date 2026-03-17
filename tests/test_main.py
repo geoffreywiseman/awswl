@@ -54,3 +54,42 @@ def test_main_shows_help_when_no_args():
     with patch('sys.argv', ['awswl']):
         with pytest.raises(SystemExit):
             main.main()
+
+
+def test_execute_disable_current_with_add_current_prints_error(capsys):
+    """execute() prints an error when --disable-current is used with add-current."""
+    opt = Namespace()
+    opt.command = 'add-current'
+    opt.sgid = 'sg-12345'
+    opt.sg_name = None
+    opt.disable_current = True
+
+    main.execute(opt)
+
+    assert "Cannot use --disable-current with add-current" in capsys.readouterr().out
+
+
+def test_execute_disable_current_with_remove_current_prints_error(capsys):
+    """execute() prints an error when --disable-current is used with remove-current."""
+    opt = Namespace()
+    opt.command = 'remove-current'
+    opt.sgid = 'sg-12345'
+    opt.sg_name = None
+    opt.disable_current = True
+
+    main.execute(opt)
+
+    assert "Cannot use --disable-current with remove-current" in capsys.readouterr().out
+
+
+def test_execute_disable_current_with_update_current_prints_error(capsys):
+    """execute() prints an error when --disable-current is used with update-current."""
+    opt = Namespace()
+    opt.command = 'update-current'
+    opt.sgid = 'sg-12345'
+    opt.sg_name = None
+    opt.disable_current = True
+
+    main.execute(opt)
+
+    assert "Cannot use --disable-current with update-current" in capsys.readouterr().out

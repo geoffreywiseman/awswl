@@ -52,6 +52,16 @@ def test_override_sgname_env(sgname):
     assert options.sg_name != sgname
 
 
+def test_parse_disable_current_default_is_false():
+    options = cli.parse_args([])
+    assert options.disable_current is False
+
+
+def test_parse_disable_current_flag():
+    options = cli.parse_args(['--disable-current'])
+    assert options.disable_current is True
+
+
 # TODO: Revisit these test after cli refactored
 
 # def test_default_desc():

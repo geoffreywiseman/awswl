@@ -26,6 +26,12 @@ def parse_args(args):
         help='The port used for SSH. By default this is port 22, but some people '
              'prefer to access SSH over another port.'
     )
+    parser.add_argument(
+        '--disable-current', action='store_true', default=False,
+        help='Disable lookups of the current external IP address. '
+             'Prevents network requests to checkip.amazonaws.com. '
+             'Cannot be used with add-current, remove-current, or update-current.'
+    )
 
     # Subcommands
     subparser = parser.add_subparsers(dest='command', help='Subcommands to control the allowlist.')
