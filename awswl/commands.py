@@ -14,7 +14,7 @@ import awswl
 
 
 def cmd_list(options):
-    if getattr(options, 'disable_current', False):
+    if options.disable_current:
         external_ip = None
     else:
         external_ip = ip_address(str(externalip.get_external_ip()))

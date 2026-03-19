@@ -11,6 +11,7 @@ def test_unexpected_command(capsys):
     opt.command = "fubar"
     opt.sgid = "sg-12345"
     opt.sg_name = None
+    opt.disable_current = False
 
     main.execute(opt)
 
@@ -23,6 +24,7 @@ def test_execute_requires_security_group(capsys):
     opt.command = 'list'
     opt.sgid = None
     opt.sg_name = None
+    opt.disable_current = False
 
     main.execute(opt)
 
@@ -35,6 +37,7 @@ def test_execute_version_skips_sg_check(capsys):
     opt.command = 'version'
     opt.sgid = None
     opt.sg_name = None
+    opt.disable_current = False
 
     main.execute(opt)
 
