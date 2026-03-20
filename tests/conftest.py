@@ -29,12 +29,19 @@ def security_group_fixture(region):
         yield sg
 
 
-@pytest.fixture(name='bare_options')
-def bare_options_fixture():
-    """Return a Namespace pre-populated with the CLI's default option values."""
-    return Namespace(
-        sgid=None,
-        sg_name=None,
-        ssh_port=22,
-        disable_current=False,
-    )
+@pytest.fixture(name='options')
+def options_fixture():
+    """Return a factory that builds a Namespace with CLI defaults, overridable via kwargs."""
+    def _make(**kwargs):
+        return Namespace(
+            command=kwargs.get('command'),
+            sgid=kwargs.get('sgid'),
+            sg_name=kwargs.get('sg_name'),
+            ssh_port=kwargs.get('ssh_port', 22),
+            auto_desc=kwargs.get('auto_desc'),
+            desc=kwargs.get('desc'),
+            cidrs=kwargs.get('cidrs', []),
+            cidr=kwargs.get('cidr'),
+            disable_current=kwargs.get('disable_current', False),
+        )
+    return _make
