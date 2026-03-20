@@ -1,4 +1,5 @@
 import os
+from argparse import Namespace
 
 import boto3
 import pytest
@@ -26,3 +27,14 @@ def security_group_fixture(region):
             VpcId='vpc-123'
         )
         yield sg
+
+
+@pytest.fixture(name='bare_options')
+def bare_options_fixture():
+    """Return a Namespace pre-populated with the CLI's default option values."""
+    return Namespace(
+        sgid=None,
+        sg_name=None,
+        ssh_port=22,
+        disable_current=False,
+    )
