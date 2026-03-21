@@ -31,4 +31,9 @@ def validate_options(options: Namespace):
             "or security group name (--sg-name, AWSWL_SGNAME) for awswl to use."
         )
         return False
+    if options.disable_current and options.command in ('add-current', 'remove-current', 'update-current'):
+        print(
+            f"Cannot use --disable-current with {options.command}."
+        )
+        return False
     return True

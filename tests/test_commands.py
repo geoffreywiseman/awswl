@@ -10,18 +10,6 @@ import awswl
 from awswl import commands
 
 
-def options(**kwargs):
-    opt = Namespace()
-    opt.sgid = kwargs.get('sgid')
-    opt.sg_name = kwargs.get('sg_name')
-    opt.ssh_port = 22
-    opt.auto_desc = kwargs.get('auto_desc')
-    opt.desc = kwargs.get('desc')
-    opt.cidrs = kwargs.get('cidrs', [])
-    opt.cidr = kwargs.get('cidr')
-    return opt
-
-
 def assert_list_output(opt, matches, capsys):
     with patch('awswl.externalip.get_external_ip', return_value='192.0.2.1'):
         commands.cmd_list(opt)
@@ -38,15 +26,15 @@ def test_version_command(capsys):
     assert capsys.readouterr().out == f"awswl v{awswl.version}\n"
 
 
-def test_list_command_lists_no_blocks_sgid(region, security_group, capsys):
+def test_list_command_lists_no_blocks_sgid(security_group, options, capsys):
     assert_list_output(options(sgid=security_group.id), "No CIDR blocks authorized for SSH", capsys)
 
 
-def test_list_command_lists_no_blocks_sgname(region, security_group, capsys):
+def test_list_command_lists_no_blocks_sgname(security_group, options, capsys):
     assert_list_output(options(sg_name=security_group.group_name), "No CIDR blocks authorized for SSH", capsys)
 
 
-def test_list_command_lists_ipv4_blocks(region, security_group, capsys):
+def test_list_command_lists_ipv4_blocks(security_group, options, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [
             {'CidrIp': '10.0.0.1/32'},
@@ -60,7 +48,7 @@ def test_list_command_lists_ipv4_blocks(region, security_group, capsys):
     assert_list_output(options(sg_name=security_group.group_name), ["- 10.0.0.1/32", "- 10.0.1.0/24"], capsys)
 
 
-def test_list_command_lists_ipv6_blocks(region, security_group, capsys):
+def test_list_command_lists_ipv6_blocks(security_group, options, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'Ipv6Ranges': [
             {'CidrIpv6': '2001:db8::/32'},
@@ -74,7 +62,7 @@ def test_list_command_lists_ipv6_blocks(region, security_group, capsys):
     assert_list_output(options(sg_name=security_group.group_name), ["- 2001:db8::/32", "- 2001:db8:1::/48"], capsys)
 
 
-def test_list_command_lists_descriptions(region, security_group, capsys):
+def test_list_command_lists_descriptions(security_group, options, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [
             {'CidrIp': '10.0.0.1/32', 'Description': 'Double Trouble'},
@@ -103,7 +91,7 @@ def test_list_command_lists_descriptions(region, security_group, capsys):
     )
 
 
-def test_list_command_identifies_enclosing_blocks(region, security_group, capsys):
+def test_list_command_identifies_enclosing_blocks(security_group, options, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [
             {'CidrIp': '192.0.2.1/32'},
@@ -134,7 +122,7 @@ def test_list_command_identifies_enclosing_blocks(region, security_group, capsys
 
 
 @mock_aws
-def test_list_command_sg_not_found(region, capsys):
+def test_list_command_sg_not_found(region, options, capsys):
     """When the named security group does not exist, cmd_list exits without printing blocks."""
     opt = options(sg_name='nonexistent-sg')
     with patch('awswl.externalip.get_external_ip', return_value='192.0.2.1'):
@@ -143,7 +131,7 @@ def test_list_command_sg_not_found(region, capsys):
 
 
 @mock_aws
-def test_list_command_multiple_sgs_found(region, capsys):
+def test_list_command_multiple_sgs_found(region, options, capsys):
     """When multiple security groups share a name, cmd_list lists them and exits."""
     ec2 = boto3.resource('ec2', region_name=region)
     ec2.create_security_group(Description='First', GroupName='dup-sg', VpcId='vpc-111')
@@ -155,7 +143,7 @@ def test_list_command_multiple_sgs_found(region, capsys):
     assert "Found 2 security groups matching name:" in output
 
 
-def test_list_command_no_region_shows_error(capsys, monkeypatch):
+def test_list_command_no_region_shows_error(options, capsys, monkeypatch):
     """cmd_list prints a clear message when no AWS region is configured."""
     monkeypatch.delenv('AWS_DEFAULT_REGION', raising=False)
     monkeypatch.setenv('AWS_CONFIG_FILE', '/dev/null')
@@ -165,7 +153,7 @@ def test_list_command_no_region_shows_error(capsys, monkeypatch):
     assert "No AWS region specified" in capsys.readouterr().out
 
 
-def test_add_current_adds_permission(region, security_group, capsys):
+def test_add_current_adds_permission(security_group, options, capsys):
     assert not security_group.ip_permissions
     opt = options(sgid=security_group.id)
     with patch('awswl.externalip.get_external_ip', return_value='192.0.2.1'):
@@ -179,7 +167,7 @@ def test_add_current_adds_permission(region, security_group, capsys):
     assert "Added current external IP address as a CIDR block" in capsys.readouterr().out
 
 
-def test_add_adds_specified_permission_sgid(region, security_group, capsys):
+def test_add_adds_specified_permission_sgid(security_group, options, capsys):
     assert not security_group.ip_permissions
     opt = options(sgid=security_group.id, cidrs=['192.0.2.1/24'])
     commands.cmd_add(opt)
@@ -192,7 +180,7 @@ def test_add_adds_specified_permission_sgid(region, security_group, capsys):
     assert "Added specified CIDR block" in capsys.readouterr().out
 
 
-def test_add_adds_specified_permission_sgname(region, security_group, capsys):
+def test_add_adds_specified_permission_sgname(security_group, options, capsys):
     assert not security_group.ip_permissions
     opt = options(sg_name=security_group.group_name, cidrs=['192.0.2.1/24'])
     commands.cmd_add(opt)
@@ -205,7 +193,7 @@ def test_add_adds_specified_permission_sgname(region, security_group, capsys):
     assert "Added specified CIDR block" in capsys.readouterr().out
 
 
-def test_add_explicit_desc(region, security_group, capsys):
+def test_add_explicit_desc(security_group, options, capsys):
     """Explicit --desc is stored on the added rule and echoed in the output."""
     opt = options(sgid=security_group.id, cidrs=['10.0.0.1/32'], desc='my-description')
     commands.cmd_add(opt)
@@ -216,14 +204,14 @@ def test_add_explicit_desc(region, security_group, capsys):
     assert "my-description" in capsys.readouterr().out
 
 
-def test_add_invalid_cidr_shows_error(region, security_group, capsys):
+def test_add_invalid_cidr_shows_error(security_group, options, capsys):
     """An invalid CIDR string produces an 'Add error' message instead of crashing."""
     opt = options(sgid=security_group.id, cidrs=['not-a-valid-cidr'])
     commands.cmd_add(opt)
     assert "Add error:" in capsys.readouterr().out
 
 
-def test_add_adds_specified_ipv6_permission(region, security_group, capsys):
+def test_add_adds_specified_ipv6_permission(security_group, options, capsys):
     assert not security_group.ip_permissions
     opt = options(sgid=security_group.id, cidrs=['2001:db8::/32'])
     commands.cmd_add(opt)
@@ -236,7 +224,7 @@ def test_add_adds_specified_ipv6_permission(region, security_group, capsys):
     assert "Added specified CIDR block" in capsys.readouterr().out
 
 
-def test_add_ipv6_when_already_present(region, security_group, capsys):
+def test_add_ipv6_when_already_present(security_group, options, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'Ipv6Ranges': [{'CidrIpv6': '2001:db8::/32'}],
         'IpProtocol': 'tcp',
@@ -252,7 +240,7 @@ def test_add_ipv6_when_already_present(region, security_group, capsys):
     assert "already allowlisted" in capsys.readouterr().out
 
 
-def test_add_ipv6_when_containing_rule_present(region, security_group, capsys):
+def test_add_ipv6_when_containing_rule_present(security_group, options, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'Ipv6Ranges': [{'CidrIpv6': '2001:db8::/32'}],
         'IpProtocol': 'tcp',
@@ -268,7 +256,7 @@ def test_add_ipv6_when_containing_rule_present(region, security_group, capsys):
     assert "already covered by existing rule" in capsys.readouterr().out
 
 
-def test_remove_current_removes_permission_sgid(region, security_group, capsys):
+def test_remove_current_removes_permission_sgid(security_group, options, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [{'CidrIp': '192.0.2.4/32'}],
         'IpProtocol': 'tcp',
@@ -284,7 +272,7 @@ def test_remove_current_removes_permission_sgid(region, security_group, capsys):
     assert "Removed current external IP address (192.0.2.4/32)" in capsys.readouterr().out
 
 
-def test_remove_current_removes_permission_sgname(region, security_group, capsys):
+def test_remove_current_removes_permission_sgname(security_group, options, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [{'CidrIp': '192.0.2.8/32'}],
         'IpProtocol': 'tcp',
@@ -300,7 +288,7 @@ def test_remove_current_removes_permission_sgname(region, security_group, capsys
     assert "Removed current external IP address (192.0.2.8/32)" in capsys.readouterr().out
 
 
-def test_remove_current_indicates_notfound_sgid(region, security_group, capsys):
+def test_remove_current_indicates_notfound_sgid(security_group, options, capsys):
     opt = options(sgid=security_group.id)
     with patch('awswl.externalip.get_external_ip', return_value='192.0.2.1'):
         commands.cmd_remove_current(opt)
@@ -308,7 +296,7 @@ def test_remove_current_indicates_notfound_sgid(region, security_group, capsys):
            in capsys.readouterr().out
 
 
-def test_remove_current_indicates_notfound_sgname(region, security_group, capsys):
+def test_remove_current_indicates_notfound_sgname(security_group, options, capsys):
     opt = options(sg_name=security_group.group_name)
     with patch('awswl.externalip.get_external_ip', return_value='192.0.2.1'):
         commands.cmd_remove_current(opt)
@@ -316,7 +304,7 @@ def test_remove_current_indicates_notfound_sgname(region, security_group, capsys
            in capsys.readouterr().out
 
 
-def test_remove_removes_specified(region, security_group, capsys):
+def test_remove_removes_specified(security_group, options, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [{'CidrIp': '192.0.2.1/32'}],
         'IpProtocol': 'tcp',
@@ -331,20 +319,20 @@ def test_remove_removes_specified(region, security_group, capsys):
     assert "Removed 192.0.2.1/32 from allowlist" in capsys.readouterr().out
 
 
-def test_remove_specified_indicates_notfound(region, security_group, capsys):
+def test_remove_specified_indicates_notfound(security_group, options, capsys):
     opt = options(sgid=security_group.id, cidrs=['192.0.2.1/32'])
     commands.cmd_remove(opt)
     assert "192.0.2.1/32 does not seem to be allowlisted." in capsys.readouterr().out
 
 
-def test_remove_invalid_cidr_shows_error(region, security_group, capsys):
+def test_remove_invalid_cidr_shows_error(security_group, options, capsys):
     """An invalid CIDR string produces a 'Remove error' message instead of crashing."""
     opt = options(sgid=security_group.id, cidrs=['not-a-valid-cidr'])
     commands.cmd_remove(opt)
     assert "Remove error:" in capsys.readouterr().out
 
 
-def test_remove_removes_specified_ipv6(region, security_group, capsys):
+def test_remove_removes_specified_ipv6(security_group, options, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'Ipv6Ranges': [{'CidrIpv6': '2001:db8::/32'}],
         'IpProtocol': 'tcp',
@@ -359,13 +347,13 @@ def test_remove_removes_specified_ipv6(region, security_group, capsys):
     assert "Removed 2001:db8::/32 from allowlist" in capsys.readouterr().out
 
 
-def test_remove_specified_ipv6_indicates_notfound(region, security_group, capsys):
+def test_remove_specified_ipv6_indicates_notfound(security_group, options, capsys):
     opt = options(sgid=security_group.id, cidrs=['2001:db8::/32'])
     commands.cmd_remove(opt)
     assert "2001:db8::/32 does not seem to be allowlisted." in capsys.readouterr().out
 
 
-def test_remove_when_ipv6_containing_rule_present(region, security_group, capsys):
+def test_remove_when_ipv6_containing_rule_present(security_group, options, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'Ipv6Ranges': [{'CidrIpv6': '2001:db8::/32'}],
         'IpProtocol': 'tcp',
@@ -382,7 +370,7 @@ def test_remove_when_ipv6_containing_rule_present(region, security_group, capsys
     assert "not directly allowlisted" in output
 
 
-def test_add_current_when_already_present(region, security_group, capsys):
+def test_add_current_when_already_present(security_group, options, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [
             {'CidrIp': '192.0.2.1/32'},
@@ -403,7 +391,7 @@ def test_add_current_when_already_present(region, security_group, capsys):
     assert "already allowlisted" in capsys.readouterr().out
 
 
-def test_add_current_when_containing_rule_present(region, security_group, capsys):
+def test_add_current_when_containing_rule_present(security_group, options, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [{'CidrIp': '192.0.2.0/24'}],
         'IpProtocol': 'tcp',
@@ -421,7 +409,7 @@ def test_add_current_when_containing_rule_present(region, security_group, capsys
     assert "already covered by existing rule" in capsys.readouterr().out
 
 
-def test_remove_when_containing_rule_present(region, security_group, capsys):
+def test_remove_when_containing_rule_present(security_group, options, capsys):
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [{'CidrIp': '192.0.2.0/24'}],
         'IpProtocol': 'tcp',
@@ -440,7 +428,7 @@ def test_remove_when_containing_rule_present(region, security_group, capsys):
     assert "not directly allowlisted" in output
 
 
-def test_add_autodesc(region, security_group):
+def test_add_autodesc(security_group, options):
     x_acquired = date.fromisoformat("2022-10-27")
     opt = options(sgid=security_group.id, auto_desc=True, cidrs=['1.2.3.4/32'])
     with patch.object(os, 'getlogin', return_value='emusk'), patch('awswl.commands.date') as mock_date:
@@ -454,7 +442,7 @@ def test_add_autodesc(region, security_group):
     assert ranges[0]['Description'] == 'emusk - 2022-10-27'
 
 
-def test_add_desc(region, security_group):
+def test_add_desc(security_group, options):
     cwbd = date.fromisoformat("2008-03-01")
     opt = options(sg_name=security_group.group_name, auto_desc=True, cidrs=['3.2.1.0/30'])
     with patch.object(os, 'getlogin', return_value='thestuff'), patch('awswl.commands.date') as mock_date:
@@ -472,7 +460,7 @@ def test_add_desc(region, security_group):
 # cmd_update / cmd_update_current
 # ---------------------------------------------------------------------------
 
-def test_update_command_replaces_cidr(region, security_group, capsys):
+def test_update_command_replaces_cidr(security_group, options, capsys):
     """update finds the rule by description, removes the old CIDR, and adds the replacement."""
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [{'CidrIp': '10.0.0.1/32', 'Description': 'my-host'}],
@@ -490,7 +478,7 @@ def test_update_command_replaces_cidr(region, security_group, capsys):
     assert "Added new value" in capsys.readouterr().out
 
 
-def test_update_command_no_op_when_cidr_unchanged(region, security_group, capsys):
+def test_update_command_no_op_when_cidr_unchanged(security_group, options, capsys):
     """update is a no-op and reports 'already allowlisted' when CIDR hasn't changed."""
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [{'CidrIp': '10.0.0.1/32', 'Description': 'my-host'}],
@@ -503,14 +491,14 @@ def test_update_command_no_op_when_cidr_unchanged(region, security_group, capsys
     assert "already allowlisted" in capsys.readouterr().out
 
 
-def test_update_command_reports_missing_description(region, security_group, capsys):
+def test_update_command_reports_missing_description(security_group, options, capsys):
     """update reports failure when no rule matches the requested description."""
     opt = options(sgid=security_group.id, cidr='10.0.0.2/32', desc='no-such-desc')
     commands.cmd_update(opt)
     assert "no CIDR found matching description" in capsys.readouterr().out
 
 
-def test_update_invalid_cidr_shows_error(region, security_group, capsys):
+def test_update_invalid_cidr_shows_error(security_group, options, capsys):
     """An invalid CIDR string in update produces an 'Update error' message."""
     # First add a rule so find_cidr_matching_desc would succeed if CIDR were valid.
     security_group.authorize_ingress(IpPermissions=[{
@@ -524,7 +512,7 @@ def test_update_invalid_cidr_shows_error(region, security_group, capsys):
     assert "Update error:" in capsys.readouterr().out
 
 
-def test_update_command_reports_duplicate_descriptions(region, security_group, capsys):
+def test_update_command_reports_duplicate_descriptions(security_group, options, capsys):
     """update reports failure when more than one rule carries the requested description."""
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [
@@ -540,7 +528,7 @@ def test_update_command_reports_duplicate_descriptions(region, security_group, c
     assert "found more than one CIDR matching description" in capsys.readouterr().out
 
 
-def test_update_current_command_replaces_cidr(region, security_group, capsys):
+def test_update_current_command_replaces_cidr(security_group, options, capsys):
     """update-current finds the rule by description and replaces its CIDR with the current IP."""
     security_group.authorize_ingress(IpPermissions=[{
         'IpRanges': [{'CidrIp': '10.0.0.1/32', 'Description': 'my-host'}],
@@ -557,3 +545,39 @@ def test_update_current_command_replaces_cidr(region, security_group, capsys):
     assert '10.0.0.2/32' in all_cidrs
     assert '10.0.0.1/32' not in all_cidrs
     assert "Added new value" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
+# --disable-current
+# ---------------------------------------------------------------------------
+
+def test_list_command_disable_current_skips_ip_fetch(security_group, options, capsys):
+    """cmd_list with disable_current=True should not call get_external_ip."""
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [{'CidrIp': '192.0.2.1/32'}],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id, disable_current=True)
+    with patch('awswl.externalip.get_external_ip') as mock_get_ip:
+        commands.cmd_list(opt)
+        mock_get_ip.assert_not_called()
+    output = capsys.readouterr().out
+    assert "192.0.2.1/32" in output
+    assert "(current)" not in output
+
+
+def test_list_command_disable_current_no_current_marker(security_group, options, capsys):
+    """cmd_list with disable_current=True should not mark any block as (current)."""
+    security_group.authorize_ingress(IpPermissions=[{
+        'IpRanges': [{'CidrIp': '10.0.0.1/32'}],
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22
+    }])
+    opt = options(sgid=security_group.id, disable_current=True)
+    commands.cmd_list(opt)
+    output = capsys.readouterr().out
+    assert "10.0.0.1/32" in output
+    assert "(current)" not in output

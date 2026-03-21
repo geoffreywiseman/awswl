@@ -14,7 +14,10 @@ import awswl
 
 
 def cmd_list(options):
-    external_ip = ip_address(str(externalip.get_external_ip()))
+    if options.disable_current:
+        external_ip = None
+    else:
+        external_ip = ip_address(str(externalip.get_external_ip()))
     try:
         security_group = get_security_group(options)
         if not security_group:
@@ -40,7 +43,7 @@ def cmd_list(options):
         if authorized_blocks:
             print("The following CIDR blocks are authorized for SSH:")
             for block, desc in authorized_blocks:
-                current = external_ip in block
+                current = external_ip is not None and external_ip in block
                 print(f"- {str(block):35}{'(current)' if current else ''}{'(' + desc + ')' if desc else ''}")
         else:
             print("No CIDR blocks authorized for SSH.")
@@ -54,9 +57,9 @@ def cmd_list(options):
 
 
 def get_description(options: Namespace) -> Optional[str]:
-    if 'auto_desc' in options and options.auto_desc:
+    if options.auto_desc:
         return get_auto_description()
-    elif 'desc' in options and options.desc:
+    elif options.desc:
         return options.desc
     else:
         return None
