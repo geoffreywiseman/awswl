@@ -38,7 +38,7 @@ def options_fixture():
             sgid=kwargs.get('sgid'),
             sg_name=kwargs.get('sg_name'),
             ssh_port=kwargs.get('ssh_port', 22),
-            auto_desc=kwargs.get('auto_desc'),
+            auto_desc=kwargs.get('auto_desc', False),
             desc=kwargs.get('desc'),
             cidrs=kwargs.get('cidrs', []),
             cidr=kwargs.get('cidr'),

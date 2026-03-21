@@ -57,9 +57,9 @@ def cmd_list(options):
 
 
 def get_description(options: Namespace) -> Optional[str]:
-    if 'auto_desc' in options and options.auto_desc:
+    if options.auto_desc:
         return get_auto_description()
-    elif 'desc' in options and options.desc:
+    elif options.desc:
         return options.desc
     else:
         return None

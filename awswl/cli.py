@@ -32,6 +32,7 @@ def parse_args(args):
              'Prevents network requests to checkip.amazonaws.com. '
              'Cannot be used with add-current, remove-current, or update-current.'
     )
+    parser.set_defaults(auto_desc=False, desc=None, cidrs=[], cidr=None)
 
     # Subcommands
     subparser = parser.add_subparsers(dest='command', help='Subcommands to control the allowlist.')
