@@ -227,18 +227,19 @@ def get_security_group(options: Namespace):
     ec2 = boto3.resource('ec2')
     if options.sgid:
         return ec2.SecurityGroup(options.sgid)
-    else:
-        groups = get_matching_security_groups(options.sg_name)
-        if len(groups) == 0:
-            print(f"Could not find security group with name {options.sg_name}\n")
-        elif len(groups) == 1:
-            [name, sgid] = groups[0]
-            print(f"Using security group {name} ({sgid}).\n")
-            return ec2.SecurityGroup(sgid)
-        else:
-            print(f"Found {len(groups)} security groups matching name: ")
-            for group in groups:
-                print(f"- {group[0]} ({group[1]})")
+    groups = get_matching_security_groups(options.sg_name)
+    if len(groups) == 0:
+        print(f"Could not find security group with name {options.sg_name}\n")
+        return None
+    if len(groups) == 1:
+        [name, sgid] = groups[0]
+        print(f"Using security group {name} ({sgid}).\n")
+        return ec2.SecurityGroup(sgid)
+
+    print(f"Found {len(groups)} security groups matching name: ")
+    for group in groups:
+        print(f"- {group[0]} ({group[1]})")
+    return None
 
 
 def get_matching_security_groups(sg_name):
