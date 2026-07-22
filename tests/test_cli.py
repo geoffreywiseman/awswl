@@ -62,25 +62,25 @@ def test_parse_disable_current_flag():
     assert options.disable_current is True
 
 
-# TODO: Revisit these test after cli refactored
-
-# def test_default_desc():
-#     options = cli.parse_args(['version'])
-#     assert options.desc is None
-#     assert not options.auto_desc
+def test_default_desc():
+    options = cli.parse_args(['version'])
+    assert options.desc is None
+    assert not options.auto_desc
 
 
-# def test_parse_desc():
-#     description = 'Bastion Host'
-#     options = cli.parse_args(['--desc', description])
-#     assert options.desc == description
+def test_parse_desc():
+    description = 'Bastion Host'
+    options = cli.parse_args(['add', '--desc', description, '203.0.113.10/32'])
+    assert options.command == 'add'
+    assert options.desc == description
 
 
-# def test_parse_autodesc():
-#     options = cli.parse_args(['--auto-desc'])
-#     assert options.auto_desc
-#
-#
-# def test_parse_conflict():
-#     with pytest.raises(SystemExit):
-#         cli.parse_args(['--auto-desc', '--desc', 'conflict'])
+def test_parse_autodesc():
+    options = cli.parse_args(['add-current', '--auto-desc'])
+    assert options.command == 'add-current'
+    assert options.auto_desc
+
+
+def test_parse_conflict():
+    with pytest.raises(SystemExit):
+        cli.parse_args(['add-current', '--auto-desc', '--desc', 'conflict'])
