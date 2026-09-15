@@ -1,5 +1,54 @@
 # Changelog
 
+## [Unreleased]
+
+### Internals
+
+- Updated Ruff from 0.15.22 to 0.16.6
+  - 0.16.0 expanded the default rule set from 59 rules to 413, which surfaced 18 lint violations
+    in a project that relies on those defaults
+  - Resolved all of them; the local date used by `--auto-desc` is deliberate and kept, with a
+    documented suppression
+
+## [1.3.1] - 2026-07-25
+
+Patch release to fix publishing. The release workflow now takes the version from the git tag, so the
+package metadata and the tag can no longer drift out of sync and fail the publish.
+
+## [1.3.0] - 2026-07-25
+
+### Added
+
+- IPv6 Support
+  - CIDR blocks are now recognized as IPv6 and allowlisted as such
+- Privacy
+  - `--disable-current` disables lookups of your current external IP address, preventing any network
+    request to `checkip.amazonaws.com`
+  - Cannot be combined with `add-current`, `remove-current` or `update-current`
+
+### Changed
+
+- Minimum Python is now 3.10, up from 3.9, which has reached end of life
+  - The CI matrix drops 3.9 and adds 3.14
+  - This is a breaking change for anyone still running 3.9
+- `add` and `remove` now pre-check for duplicate or covering rules, and report more clearly when a
+  CIDR block is already allowlisted or already covered by a broader existing rule
+
+### Fixed
+
+- Resolved the outstanding CodeQL alerts, and updated the CodeQL workflow for Python scanning
+
+### Internals
+
+- Upgraded moto from v4 to v5 (`mock_ec2` becomes `mock_aws`)
+- Upgraded pytest from 7.4.4 to 9.1.1, modernised test idioms and filled coverage gaps
+  - Consolidated the options fixtures into a single conftest factory
+  - Re-enabled the CLI parser option tests
+- Replaced the Safety scan with an explicit Dependabot configuration
+- Stopped tracking `.coverage`
+- Dependency updates, including boto3, requests, urllib3, cryptography, idna, mock and Ruff
+- GitHub Actions updates, including checkout, setup-python, codeql-action and poetry-publish
+
 ## [1.2.2] - 2025-02-11
 
 Updated dependencies to address security vulnerabilities. Added scan with safety cli.
