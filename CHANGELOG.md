@@ -9,6 +9,11 @@
     in a project that relies on those defaults
   - Resolved all of them; the local date used by `--auto-desc` is deliberate and kept, with a
     documented suppression
+- Dependency updates
+  - boto3 from 1.43.53 to 1.43.89
+  - moto from 5.2.2 to 5.2.3, cryptography from 48.0.1 to 50.0.0
+- GitHub Actions updates
+  - `actions/setup-python` from 6 to 7 in the release workflow
 
 ## [1.3.1] - 2026-07-25
 
@@ -46,8 +51,16 @@ package metadata and the tag can no longer drift out of sync and fail the publis
   - Re-enabled the CLI parser option tests
 - Replaced the Safety scan with an explicit Dependabot configuration
 - Stopped tracking `.coverage`
-- Dependency updates, including boto3, requests, urllib3, cryptography, idna, mock and Ruff
-- GitHub Actions updates, including checkout, setup-python, codeql-action and poetry-publish
+- Dependency updates
+  - Runtime: boto3 from 1.36.17 to 1.43.53, requests from 2.32.3 to 2.34.2
+  - The `urllib3` constraint was relaxed from `<2` to `<3`, moving it from 1.26.20 to 2.7.0
+  - Development: Ruff from 0.7.4 to 0.15.22, mock from 5.1.0 to 5.2.0 (the pytest and moto
+    upgrades are described above)
+  - Transitive and documentation updates, including cryptography from 43.0.3 to 48.0.1, jinja2,
+    idna, pygments, werkzeug and mkdocs
+- GitHub Actions updates
+  - `actions/checkout` from 2 to 7, `actions/setup-python` from 5 to 7,
+    `github/codeql-action` from 1 to 4, `JRubics/poetry-publish` from 2.0 to 2.1
 
 ## [1.2.2] - 2025-02-11
 
