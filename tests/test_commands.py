@@ -7,7 +7,7 @@ import boto3
 from moto import mock_aws
 
 import awswl
-import awswl.commands as commands
+from awswl import commands
 
 
 def assert_list_output(opt, matches, capsys):

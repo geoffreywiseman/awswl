@@ -1,7 +1,5 @@
 import boto3
-
 from moto import mock_aws
-
 
 # Tests of Moto
 # One of these was failing, passes now.

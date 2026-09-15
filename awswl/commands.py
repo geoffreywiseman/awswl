@@ -1,16 +1,14 @@
 import os
 from argparse import Namespace
-from builtins import str
 from datetime import date
-from ipaddress import ip_network, ip_address
-from typing import Optional
+from ipaddress import ip_address, ip_network
 
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError
 
-from . import externalip
-
 import awswl
+
+from . import externalip
 
 
 def cmd_list(options):
@@ -44,10 +42,10 @@ def cmd_list(options):
             print("The following CIDR blocks are authorized for SSH:")
             for block, desc in authorized_blocks:
                 current = external_ip is not None and external_ip in block
-                print(f"- {str(block):35}{'(current)' if current else ''}{'(' + desc + ')' if desc else ''}")
+                print(f"- {block!s:35}{'(current)' if current else ''}{'(' + desc + ')' if desc else ''}")
         else:
             print("No CIDR blocks authorized for SSH.")
-        print("")
+        print()
     except NoRegionError:
         print("No AWS region specified (AWS configuration/environment variables).")
     except NoCredentialsError as e:
@@ -56,7 +54,7 @@ def cmd_list(options):
         print(e)
 
 
-def get_description(options: Namespace) -> Optional[str]:
+def get_description(options: Namespace) -> str | None:
     if options.auto_desc:
         return get_auto_description()
     elif options.desc:
@@ -66,7 +64,9 @@ def get_description(options: Namespace) -> Optional[str]:
 
 
 def get_auto_description():
-    return f"{os.getlogin()} - {date.today()}"
+    # Local date is intentional here: this is a human-readable label on the rule,
+    # read by whoever is looking at the security group.
+    return f"{os.getlogin()} - {date.today()}"  # noqa: DTZ011
 
 
 def cmd_add(options: Namespace):
@@ -77,7 +77,7 @@ def cmd_add(options: Namespace):
                 network = ip_network(str(cidr), strict=False)
                 add_cidr(options, security_group, "specified CIDR block", network.compressed, get_description(options))
     except ValueError as e:
-        print("Add error: {0}\n".format(str(e)))
+        print(f"Add error: {e!s}\n")
         return
 
 
@@ -85,7 +85,7 @@ def cmd_add_current(options):
     security_group = get_security_group(options)
     if security_group:
         external_ip = externalip.get_external_ip()
-        cidr = "{0}/32".format(external_ip)
+        cidr = f"{external_ip}/32"
         add_cidr(options, security_group, "current external IP address as a CIDR block", cidr, get_description(options))
 
 
@@ -125,7 +125,7 @@ def add_cidr(options, security_group, explain, cidr, description):
                     print(f"{cap_explain} ({cidr}) is already covered by existing rule {existing_network}.")
                     return
 
-            ip_range = dict()
+            ip_range = {}
             if cidr_network.version == 6:
                 ip_range['CidrIpv6'] = cidr
                 ranges_key = 'Ipv6Ranges'
@@ -167,7 +167,7 @@ def cmd_remove(options: Namespace):
                 network = ip_network(str(cidr), strict=False)
                 remove_cidr(options, security_group, str(cidr), network.compressed)
     except ValueError as e:
-        print(f"Remove error: {str(e)}\n")
+        print(f"Remove error: {e!s}\n")
         return
 
 
@@ -261,7 +261,7 @@ def cmd_update(options: Namespace):
             network = ip_network(str(cidr), strict=False)
             update_cidr(options, security_group, network.compressed, get_description(options))
     except ValueError as e:
-        print(f"Update error: {str(e)}\n")
+        print(f"Update error: {e!s}\n")
         return
 
 
@@ -283,7 +283,7 @@ def update_cidr(options: Namespace, security_group, new_cidr: str, description: 
         add_cidr(options, security_group, "new value", new_cidr, description)
 
 
-def find_cidr_matching_desc(security_group, options: Namespace) -> Optional[str]:
+def find_cidr_matching_desc(security_group, options: Namespace) -> str | None:
     cidrs = [
         item['CidrIp']
         for perm in security_group.ip_permissions if

@@ -35,9 +35,8 @@ def test_main_with_version_command(capsys):
 
 def test_main_shows_help_when_no_args():
     """main() exits with SystemExit when invoked with no arguments (shows help)."""
-    with patch('sys.argv', ['awswl']):
-        with pytest.raises(SystemExit):
-            main.main()
+    with patch('sys.argv', ['awswl']), pytest.raises(SystemExit):
+        main.main()
 
 
 def test_execute_disable_current_with_add_current_prints_error(options, capsys):
