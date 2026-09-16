@@ -35,7 +35,7 @@ def parse_args(args):
     parser.set_defaults(auto_desc=False, desc=None, cidrs=[], cidr=None)
 
     # Subcommands
-    subparser = parser.add_subparsers(dest='command', help='Subcommands to control the allowlist.')
+    subparser = parser.add_subparsers(dest='command', required=True, help='Subcommands to control the allowlist.')
 
     subparser.add_parser('version', help='Displays the current version of awswl.')
     subparser.add_parser('list', help='Lists the ip addresses in the security group with SSH access.')

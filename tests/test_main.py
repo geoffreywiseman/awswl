@@ -11,6 +11,15 @@ def test_unexpected_command(options, capsys):
     assert capsys.readouterr().out == "Unexpected command: fubar\n"
 
 
+def test_main_without_subcommand_exits_with_usage_error(capsys):
+    """Options without a subcommand are an argparse usage error, not a traceback."""
+    with patch('sys.argv', ['awswl', '--sgid', 'sg-12345']), pytest.raises(SystemExit) as exc:
+        main.main()
+
+    assert exc.value.code == 2
+    assert 'the following arguments are required' in capsys.readouterr().err
+
+
 def test_execute_requires_security_group(options, capsys):
     """execute() prints an error and returns when no security group is specified."""
     main.execute(options(command='list'))

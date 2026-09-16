@@ -2,6 +2,15 @@
 
 ## [1.3.2] - 2026-09-15
 
+### Fixed
+
+- Passing options without a subcommand, as in `awswl --sgid sg-123` or an `AWSWL_SGID` in the
+  environment with the command forgotten, raised
+  `AttributeError: 'NoneType' object has no attribute 'replace'` and printed a traceback. The
+  subcommand is now marked required, so argparse reports a usage error listing the valid commands
+  and exits 2, rather than crashing on a zero exit code. A bare `awswl` still prints help, as
+  before. The bug predates this release and was surfaced by review feedback on the pull request
+
 ### Internals
 
 - Migrated project metadata from Poetry's `[tool.poetry]` schema to the PEP 621 `[project]`
