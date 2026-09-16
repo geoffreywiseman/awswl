@@ -13,21 +13,21 @@ def fixture_env_sgid():
     del os.environ[cli.AWSWL_SGID_KEY]
 
 
-def test_parse_empty_arguments():
-    options = cli.parse_args([])
+def test_parse_defaults_without_options():
+    options = cli.parse_args(['list'])
     assert options.ssh_port == 22
     assert options.sgid is None
     assert options.sg_name is None
 
 
 def test_parse_sgid_into_option(sgid):
-    options = cli.parse_args([])
+    options = cli.parse_args(['list'])
     assert options.sgid == sgid
 
 
 def test_parse_override_defaults(sgid):
     override = 'sg-67890'
-    options = cli.parse_args(['--sgid', override])
+    options = cli.parse_args(['--sgid', override, 'list'])
     assert options.sgid == override
     assert options.sgid != sgid
 
@@ -41,24 +41,24 @@ def fixture_env_sgname():
 
 
 def test_parse_sgname_env_into_option(sgname):
-    options = cli.parse_args([])
+    options = cli.parse_args(['list'])
     assert options.sg_name == sgname
 
 
 def test_override_sgname_env(sgname):
     override = 'mycorp-beta-bastion'
-    options = cli.parse_args(['--sg-name', override])
+    options = cli.parse_args(['--sg-name', override, 'list'])
     assert options.sg_name == override
     assert options.sg_name != sgname
 
 
 def test_parse_disable_current_default_is_false():
-    options = cli.parse_args([])
+    options = cli.parse_args(['list'])
     assert options.disable_current is False
 
 
 def test_parse_disable_current_flag():
-    options = cli.parse_args(['--disable-current'])
+    options = cli.parse_args(['--disable-current', 'list'])
     assert options.disable_current is True
 
 

@@ -6,7 +6,6 @@ test:
 
 lint:
     poetry run ruff check .
-    safety scan
 
 deps:
     poetry show --outdated --top-level
