@@ -15,8 +15,12 @@
   - `usingversion` reads `tool.poetry.version` from `pyproject.toml` to resolve the version of an
     uninstalled source tree; that table no longer exists, so it raised `KeyError`. The package was
     last released in February 2024 and has no PEP 621 support
-  - Behaviour is otherwise unchanged: an installed distribution reports its own version, and a
-    source tree still reports a `+`-suffixed development version, now read from `[project]`
+  - Behaviour is otherwise unchanged on Python 3.11 and newer: an installed distribution reports
+    its own version, and a source tree still reports a `+`-suffixed development version, now read
+    from `[project]` with `tomllib`
+  - Python 3.10 has no `tomllib`, so there an uninstalled source tree reports `unknown` unless
+    `tomli` is already present. Adding a runtime dependency to recover a development-only version
+    string was not worth it, and the gap closes when 3.10 support is dropped
   - Drops two runtime dependencies (`usingversion`, `toml`)
 - Removed the leftover `safety scan` step from the `lint` recipe in the justfile; it was already
   dropped from CI in favour of Dependabot
