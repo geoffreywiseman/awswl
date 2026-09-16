@@ -24,7 +24,7 @@ pip install awswl
 Of course, if you don't know what a python module is, or you don't have python and pip installed,
 you may have additional work ahead of you.
 
-Now that Python2 is largely a relic of the past, I'm focused on supporting Python 3 only. The current CI build is for Python 3.9+.
+Now that Python2 is largely a relic of the past, I'm focused on supporting Python 3 only. The current CI build covers Python 3.10 through 3.14.
 
 ## Usage ⌨
 

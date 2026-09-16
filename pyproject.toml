@@ -1,21 +1,19 @@
-[tool.poetry]
+[project]
 name = "awswl"
 version = "1.3.1"
 description = "A project to make it simple to add/remove ip addresses (or CIDR blocks) from an AWS Security group."
 authors = [
-    "Geoffrey Wiseman <geoffrey.wiseman@codiform.com>"
+    { name = "Geoffrey Wiseman", email = "geoffrey.wiseman@codiform.com" }
 ]
-license = "Public Domain"
+license = "Unlicense"
+license-files = ["LICENSE.txt"]
 readme = "README.md"
-repository = "https://github.com/geoffreywiseman/awswl"
-homepage = "https://github.com/geoffreywiseman/awswl"
 keywords = ["aws", "vpn", "securitygroups", "security", "networking", "allowlist", "ssh", "firewall", "utility"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: System :: Networking",
     "Topic :: System :: Networking :: Firewalls",
-    "License :: Public Domain",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -23,26 +21,31 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14"
 ]
+requires-python = ">=3.10,<4"
+dependencies = [
+    "ipaddress (>=1.0.23,<2)",
+    "boto3 (>=1.35.62,<2)",
+    "requests (==2.34.2)",
+    "urllib3 (<3)"
+]
 
-[tool.poetry.scripts]
+[project.urls]
+homepage = "https://github.com/geoffreywiseman/awswl"
+repository = "https://github.com/geoffreywiseman/awswl"
+
+[project.scripts]
 awswl = "awswl.main:main"
 
-[tool.poetry.dependencies]
-python = "^3.10"
-ipaddress = "^1.0.23"
-boto3 = "^1.35.62"
-requests = "2.34.2"
-usingversion = "^0.1.2"
-urllib3 = "<3"
-
-[tool.poetry.group.dev.dependencies]
-pytest = ">=8.4.2,<10.0.0"
-moto = "^5.0.0"
-mock = "^5.1.0"
-ruff = ">=0.7.3,<0.17.0"
+[dependency-groups]
+dev = [
+    "pytest (>=8.4.2,<10.0.0)",
+    "moto (>=5.0.0,<6)",
+    "mock (>=5.1.0,<6)",
+    "ruff (>=0.7.3,<0.17.0)"
+]
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
