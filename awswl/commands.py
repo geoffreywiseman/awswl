@@ -25,7 +25,7 @@ def cmd_list(options):
             permission
             for permission in security_group.ip_permissions
             if permission['IpProtocol'] == 'tcp' and
-               permission['ToPort'] <= options.ssh_port <= permission['FromPort']
+               permission['FromPort'] <= options.ssh_port <= permission['ToPort']
         ]
         authorized_blocks = [
             [ip_network(str(ip_range['CidrIp'])), ip_range.get('Description')]
