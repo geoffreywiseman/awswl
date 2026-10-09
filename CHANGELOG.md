@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- `awswl list` now includes IPv4 and IPv6 CIDR blocks authorized by TCP port ranges containing
+  the configured SSH port, including both range boundaries. The range comparison previously
+  reversed `FromPort` and `ToPort`, omitting rules that allowed more than one port
+
 ## [1.3.2] - 2026-09-15
 
 ### Fixed
