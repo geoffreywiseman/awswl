@@ -4,10 +4,10 @@ from datetime import date
 from unittest.mock import patch
 
 import boto3
+import pytest
 from moto import mock_aws
 
-import awswl
-from awswl import commands
+from awswl import commands, version
 
 
 def assert_list_output(opt, matches, capsys):
@@ -23,7 +23,7 @@ def assert_list_output(opt, matches, capsys):
 
 def test_version_command(capsys):
     commands.cmd_version(Namespace())
-    assert capsys.readouterr().out == f"awswl v{awswl.version}\n"
+    assert capsys.readouterr().out == f"awswl v{version}\n"
 
 
 def test_list_command_lists_no_blocks_sgid(security_group, options, capsys):
@@ -46,6 +46,30 @@ def test_list_command_lists_ipv4_blocks(security_group, options, capsys):
     }])
     assert_list_output(options(sgid=security_group.id), ["- 10.0.0.1/32", "- 10.0.1.0/24"], capsys)
     assert_list_output(options(sg_name=security_group.group_name), ["- 10.0.0.1/32", "- 10.0.1.0/24"], capsys)
+
+
+@pytest.mark.parametrize('ssh_port, listed', [
+    (19, False),
+    (20, True),
+    (22, True),
+    (24, True),
+    (25, False),
+])
+@pytest.mark.parametrize('ranges_key, cidr_key, cidr', [
+    ('IpRanges', 'CidrIp', '10.0.0.1/32'),
+    ('Ipv6Ranges', 'CidrIpv6', '2001:db8::/32'),
+])
+def test_list_command_filters_port_ranges(security_group, options, capsys, ssh_port, listed, ranges_key, cidr_key, cidr):
+    """List CIDRs at both range boundaries and inside, but not outside the range."""
+    security_group.authorize_ingress(IpPermissions=[{
+        ranges_key: [{cidr_key: cidr}],
+        'IpProtocol': 'tcp',
+        'FromPort': 20,
+        'ToPort': 24,
+    }])
+    expected = f"- {cidr}" if listed else "No CIDR blocks authorized for SSH"
+    assert_list_output(options(sgid=security_group.id, ssh_port=ssh_port), expected, capsys)
+    assert_list_output(options(sg_name=security_group.group_name, ssh_port=ssh_port), expected, capsys)
 
 
 def test_list_command_lists_ipv6_blocks(security_group, options, capsys):
