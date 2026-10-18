@@ -2,11 +2,23 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Minimum Python is now 3.11, up from 3.10, which has reached end of life
+  - The CI matrix drops 3.10 and adds 3.15
+  - This is a breaking change for anyone still running 3.10
+
 ### Fixed
 
 - `awswl list` now includes IPv4 and IPv6 CIDR blocks authorized by TCP port ranges containing
   the configured SSH port, including both range boundaries. The range comparison previously
   reversed `FromPort` and `ToPort`, omitting rules that allowed more than one port
+
+### Internals
+
+- Removed the `tomli` fallback for reading the version of an uninstalled source tree; `tomllib` is
+  always available from 3.11, so a source tree now reports its `+`-suffixed development version on
+  every supported Python, closing the gap noted in 1.3.2
 
 ## [1.3.2] - 2026-09-15
 

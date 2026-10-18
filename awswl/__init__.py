@@ -1,24 +1,15 @@
 """Expose the package version as ``awswl.version``."""
 
+import tomllib
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _distribution_version
 from pathlib import Path
-
-try:
-    import tomllib
-except ModuleNotFoundError:  # Python 3.10 has no tomllib; tomli is the backport.
-    try:
-        import tomli as tomllib
-    except ModuleNotFoundError:
-        tomllib = None
 
 _PACKAGE_NAME = "awswl"
 
 
 def _version_from_source_tree() -> str | None:
     """Read the version from pyproject.toml, for a tree that was never installed."""
-    if tomllib is None:
-        return None
     for directory in Path(__file__).resolve().parents[:3]:
         pyproject = directory / "pyproject.toml"
         if not pyproject.is_file():
