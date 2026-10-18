@@ -19,6 +19,10 @@
 - Removed the `tomli` fallback for reading the version of an uninstalled source tree; `tomllib` is
   always available from 3.11, so a source tree now reports its `+`-suffixed development version on
   every supported Python, closing the gap noted in 1.3.2
+- Updated Ruff from 0.16.7 to 0.17.1
+  - 0.17.0 removed most `flake8-datetimez` rules from the default set, including `DTZ011`, so the
+    suppression on the deliberate local date used by `--auto-desc` is no longer needed and is
+    removed; the explanatory comment stays
 
 ## [1.3.2] - 2026-09-15
 
