@@ -66,7 +66,7 @@ def get_description(options: Namespace) -> str | None:
 def get_auto_description():
     # Local date is intentional here: this is a human-readable label on the rule,
     # read by whoever is looking at the security group.
-    return f"{os.getlogin()} - {date.today()}"  # noqa: DTZ011
+    return f"{os.getlogin()} - {date.today()}"
 
 
 def cmd_add(options: Namespace):
